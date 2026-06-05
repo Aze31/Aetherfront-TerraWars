@@ -1,5 +1,6 @@
 //just set up each card object in this class, and each card type.
 using System.Collections.Generic;
+using UnityEngine.Accessibility;
 using static CardLibrary;
 public class Card
 {
@@ -13,7 +14,8 @@ public class Unit : Card
     public int DEFENSE;
     public int ATTACK;
     public Element type;
-    public Unit( string name, int s, int d, int a, int cost)
+    public Ability ability;
+    public Unit(string name, int s, int d, int a, int cost, Element type)
     {
         ATTACK = a;
         DEFENSE = d;
@@ -21,6 +23,16 @@ public class Unit : Card
         this.name = name;
         this.cost = cost;
     }
+    public Unit(string name, int s, int d, int a, int cost, Element type, Ability ability)
+    {
+        ATTACK = a;
+        DEFENSE = d;
+        size = s;
+        this.name = name;
+        this.cost = cost;
+        this.ability = ability;
+    }
+
 }
 
 public class Tactic : Card
@@ -42,6 +54,9 @@ public class Terrain : Card
     public int size;
     public string effect;
     public Element type;
+    public PassCondition condition;
+    public Element overlayType;
+    //use this constructor if anyone can pass the terrain
     public Terrain(string name, int size, Element type, string effect, int cost)
     {
         this.name = name;
@@ -49,5 +64,36 @@ public class Terrain : Card
         this.type = type;
         this.effect = effect;
         this.cost = cost;
+    }
+    //use this one to specify
+    public Terrain(string name, int size, Element type, string effect, int cost, PassCondition pass)
+    {
+        this.name = name;
+        this.size = size;
+        this.type = type;
+        this.effect = effect;
+        this.cost = cost;
+        condition = pass;
+    }
+    //to add an overlay type:
+        public Terrain(string name, int size, Element type, string effect, int cost, Element overlayType)
+    {
+        this.name = name;
+        this.size = size;
+        this.type = type;
+        this.effect = effect;
+        this.cost = cost;
+        this.overlayType = overlayType;
+    }
+    //for both:
+    public Terrain(string name, int size, Element type, string effect, int cost, PassCondition pass, Element overlayType)
+    {
+        this.name = name;
+        this.size = size;
+        this.type = type;
+        this.effect = effect;
+        this.cost = cost;
+        condition = pass;
+        this.overlayType = overlayType;
     }
 }

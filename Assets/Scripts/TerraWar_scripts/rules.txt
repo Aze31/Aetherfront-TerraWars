@@ -1,5 +1,5 @@
 THIS FILE GIVES AN IN-DEPTH EXPLANATION OF HOW THE CARD GAME FUNCTIONS.*
-*as the game is developed that is
+*as the game is developed that is. this is all theoretical and written before the game is made
 
 --Aether--
 The unit of elemental energy, known as Aether, is used to call Units and put Tactics in motion. 
@@ -7,16 +7,21 @@ There are two sources of Aether in a game:
     1. Each player gains +1 Aether at the beginning of their turn. This happenes before that player draws.
     2. Terrains each give the user +1 Aether, but this amount can be modified by the Terrain's own effects.
 
-Aether can be used to pay the call cost of Units, and the cost of Tactics. Each turn, you can activate as many Tactics,
+Aether can be used to pay the call cost of Units, and the cost of Tactics. Each turn, you can activate as many Tactics, and
 call as many units as your Aether allows you to. You may only place one Terrain per turn, and Units can only be placed if there is 
-enough space on the Terrain you place it.
+enough space for it on the Terrain you place it. You cannot place two Units on the same Terrain unless one of them has FLYING or DIG,
+or a size of 0.
 
 --Terrains--
 Terrains have an elemental affinity, as well as special bonuses when Units with a matching element are placed on them.
 The playing board is a 5x5 grid on which Terrains take up space. If there is not enough space on the board available, 
 then you cannot place Terrains.
-Some terrains are difficult for certain units to 'cross'. For instance, Units with flying can cross any Terrain,
-but Units that need land to walk on cannot cross Ocean terrains. A unit can only be placed on a Terrain that it can cross.
+Some terrains are difficult for certain Units to 'cross'. For instance, Units with flying can cross any Terrain,
+but Units that need land to walk on cannot cross Ocean terrains. A Unit can only be placed on a Terrain that it can cross.
+
+As the game begins, players may only place Terrain on their side of the board. As they accumulate more terrain, they may place any terrains
+adjacent to other terrain they control, as long as there's enough space. Some terrain cards can "overlay" others, meaning it can
+be placed on top of other Terrain with certain properties. For instance, Volcano has overlay over Water type Terrain.
 
 --Unit--
 A Unit is what makes up your line of offense, and defense. Units take up an amount of space equal to its size
@@ -27,3 +32,20 @@ Units can move one space per turn to a location that they can cross.
 --Tactic--
 A tactic is a card that takes no space on the board, and can have a variety of effects.
 
+
+
+now for the general stuff:
+
+--WIN CONDITIONS--
+A player who decks (attempts to draw from an empty deck) loses the game.
+A player who loses all of their Health loses the game.
+A player who triggers an ability that tells them to win the game loses the game.
+
+--CARD FLOW--
+Each player's starting hand is 6 cards randomly selected from their deck. 
+At the beginning of each turn, the players draw one card.
+
+--DECK LIMITS--
+Early game: 40-card deck minimum. 
+After the player acquires more powerful and new cards, the minimum increases to 60.
+The player may modify their deck as they like between battles. (if the program works right that is)

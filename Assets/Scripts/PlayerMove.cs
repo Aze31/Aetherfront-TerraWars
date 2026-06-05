@@ -28,6 +28,8 @@ public class PlayerMove : MonoBehaviour
         { 
             Debug.LogError("Move action not found! Check your Input Actions asset."); 
         } 
+        playerInput.actions.FindActionMap("moveMap").Enable();
+
     } 
     void Update() 
     { 
