@@ -1,5 +1,4 @@
 using UnityEngine; 
-
 using UnityEngine.InputSystem; 
 
 public class PlayerMove : MonoBehaviour 
@@ -8,9 +7,7 @@ public class PlayerMove : MonoBehaviour
     private Vector2 moveInput = Vector2.zero; 
 
     private Rigidbody2D rb; 
-
     private PlayerInput playerInput; 
-
     private InputAction moveAction; 
 
     void Awake() 
@@ -41,9 +38,8 @@ public class PlayerMove : MonoBehaviour
         { 
             Debug.LogWarning("Move action is null in Update()"); 
         } 
-        if (Keyboard.current.wKey.isPressed) Debug.Log("W is pressed"); 
     } 
-    void FixedUpdate() 
+    void FixedUpdate() //wonder why this has to be fixedUpdate
     { 
         if (rb == null) return;
         Vector2 newPosition = rb.position + moveInput * moveSpeed * Time.fixedDeltaTime; 

@@ -12,7 +12,6 @@ public class Player
     //for battle
     public List<Card> curhand = new List<Card>();
     public List<Card> battleDeck = new List<Card>();
-
     
     public Card drawCard()
     {
@@ -41,6 +40,10 @@ public class Player
             curDeck.Add(card);
         }
     }
+    public void addToCollection(Card card, int copies)
+    {
+        for(int i = 0; i < copies; i++){cardCollection.Add(card);}
+    }
     public void initBattleDeck(){battleDeck = curDeck;}
     public void loseHealth(int h){Health -= h;}
     public void payAether(int a){Aether -=a;}
@@ -48,7 +51,11 @@ public class Player
     {
         addToDeck(CardLibrary.getTerrainByName("Volcano"), 4);
         addToDeck(CardLibrary.getUnitByName("Ember Drake"), 4);
-
+        addToDeck(CardLibrary.getTacticByName("The Forked Advance"), 2);
+    }
+    public void createStartingCollection()
+    {
+        addToCollection(CardLibrary.getUnitByName("Dwarf"),2);
     }
 
 }

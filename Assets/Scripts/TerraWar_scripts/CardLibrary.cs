@@ -23,7 +23,6 @@ public static class CardLibrary
         SWIMONLY,
         RANGE1,
         RANGE2
-
     }
     public enum PassCondition
     {
