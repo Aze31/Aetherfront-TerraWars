@@ -1,9 +1,14 @@
 using UnityEngine;
-using UnityEngine.InputSystem; 
+using UnityEngine.InputSystem;
+using UnityEngine.UI;
 public class playerUIManager : MonoBehaviour
 {
     public GameObject deckDisplayCanvas;
     public GameObject collectionDisplaycanvas;
+    public Button buttonAdd;
+    public Button buttonRemove;
+    public Button incCopies;
+    public Button decCopies;
     void Start() //initialize both canvases to be not active
     {
         deckDisplayCanvas.SetActive(false);
@@ -13,11 +18,10 @@ public class playerUIManager : MonoBehaviour
     {
         if(Keyboard.current.bKey.isPressed) deckDisplayCanvas.SetActive(true);
         if(Keyboard.current.cKey.isPressed)collectionDisplaycanvas.SetActive(true);
-
         if(Keyboard.current.spaceKey.isPressed)
         {
             deckDisplayCanvas.SetActive(false);
-            collectionDisplaycanvas.SetActive(true);
+            collectionDisplaycanvas.SetActive(false);
         }
     }
 }

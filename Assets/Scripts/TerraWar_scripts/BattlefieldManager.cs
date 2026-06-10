@@ -1,12 +1,14 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System;
+using static CardLibrary;
+using System.Runtime.InteropServices.WindowsRuntime;
 //this will handle battlefield only UI and manage the gameplay mecanics pertaining to terrain placement and field stuff
 public class BattlefieldManager : MonoBehaviour
 {
     //first create the battlefield as a grid of Terrains
     //would be interesting to try implementing storage of which creatures are placed where
-    public Terrain[,] battleField = new Terrain[5,5];
+    public Tile[,] battleField = new Tile[5,5];
     
 }
 
@@ -14,9 +16,13 @@ public class BattlefieldManager : MonoBehaviour
 public class Tile
 {
     public Terrain curTerrain;
-    public Boolean occupied;
-    public Boolean canCross(CardLibrary.Ability creatureAvility)
+    public Boolean groundOccupied;
+    public Boolean skyOccupied;
+    public Boolean canCross(Ability creatureAbility)
     {
-        return curTerrain.condition == CardLibrary.PassCondition.SWIM ? false : true;
+        if(creatureAbility == Ability.FLYING){return !skyOccupied;}
+        if(creatureAbility == Ability.SWIMONLY){return curTerrain.condition == PassCondition.SWIM && !groundOccupied;}
+        if(creatureAbility == Ability.SWIM){return (curTerrain.condition == PassCondition.SWIM || curTerrain.condition == null) && !groundOccupied;}
+        return !groundOccupied;
     }
 }

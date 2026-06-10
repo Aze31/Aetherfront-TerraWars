@@ -37,8 +37,7 @@ A Unit can only be placed on a Terrain you control, but afterwards it can move t
 A tactic is a card that takes no space on the board, and can have a variety of effects.
 
 
-
---abilities
+--Abilities--
 FLYING: Units that have Flying can cross any terrain that isn't a no-fly zone. Additionally, Flying Units cannot be attacked by units without FLying.
 DIG: When a Unit has dig, it cannot be attacked by any Units without Dig. Additionally, you may decide to 'surface' a Unit that has Dig so it can be attacked, and
 attack other Units.
@@ -59,6 +58,5 @@ At the beginning of each turn, the players draw one card.
 Early game: 40-card deck minimum. 
 After the player acquires more powerful and new cards, the minimum increases to 60.
 The player may modify their deck as they like between battles. (if the program works right that is)
-
 
 --

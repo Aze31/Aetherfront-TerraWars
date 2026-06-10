@@ -15,6 +15,7 @@ public static class CardLibrary
     }
     public enum Ability
     {
+        //I have to add a null for the ability and passcond enums later for manager's processing to work
         FLYING,
         DIG,
         INVISIBLE,
@@ -33,10 +34,10 @@ public static class CardLibrary
     public static List<Unit> Units = new List<Unit>();
     public static List<Tactic> Tactics = new List<Tactic>();
     public static List<Terrain> Terrains = new List<Terrain>();
-
+    
     public static void initializeLibrary()
     {        
-        //name, cost, defense, attack, size
+        //name, size, defense, attack, cost
         Units.AddRange(new Unit[]
         {
             new Unit("Ember Drake", 1, 1, 2, 1, Element.FIRE, Ability.FLYING),
@@ -48,7 +49,8 @@ public static class CardLibrary
             new Unit("Tidebender Serpent", 2, 3, 2, 2, Element.WATER, Ability.SWIMONLY),
             new Unit("Catacomb Stalker", 2, 2, 2, 1, Element.RUIN),
             new Unit("AshArrow Archer",2,1,2,1,Element.FIRE, Ability.RANGE1),
-        });   
+            new Unit("Keen-eyed Shark",1,3,2,3,Element.WATER, Ability.SWIMONLY),
+        });
         Terrains.AddRange(new Terrain[]
         {
             //name, size, type, effect, cost, passCondition/overlay type
