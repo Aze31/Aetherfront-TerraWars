@@ -88,8 +88,9 @@ InitTestScene*.unity*
 /[Aa]ssets/StreamingAssets/aa*
 /[Aa]ssets/AddressableAssetsData/link.xml*
 /[Aa]ssets/Addressables_Temp*
+
 #TextMeshPro asset doesn't need to be included
-/[Aa]ssets/TextMesh Pro*
+/[Aa]ssets/TextMesh Pro/
 
 # By default, Addressables content builds will generate addressables_content_state.bin
 # files in platform-specific subfolders, for example:
