@@ -9,6 +9,7 @@ public class playerUIManager : MonoBehaviour
     public Button buttonRemove;
     public Button incCopies;
     public Button decCopies;
+    public int setCopies;
     void Start() //initialize both canvases to be not active
     {
         deckDisplayCanvas.SetActive(false);
@@ -23,5 +24,17 @@ public class playerUIManager : MonoBehaviour
             deckDisplayCanvas.SetActive(false);
             collectionDisplaycanvas.SetActive(false);
         }
+    }
+    public void OnButtonPressed(Button button)
+    {
+        if(button == incCopies)
+        {
+            setCopies++;
+        } else if(button == decCopies)
+        {
+            setCopies--;
+        }
+        else if(button == buttonAdd){}
+        else if(button == buttonRemove){}
     }
 }

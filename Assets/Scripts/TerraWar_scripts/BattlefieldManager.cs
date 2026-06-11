@@ -2,8 +2,10 @@ using UnityEngine;
 using System.Collections.Generic;
 using System;
 using static CardLibrary;
+using static Card;
 using System.Runtime.InteropServices.WindowsRuntime;
 //this will handle battlefield only UI and manage the gameplay mecanics pertaining to terrain placement and field stuff
+
 public class BattlefieldManager : MonoBehaviour
 {
     //first create the battlefield as a grid of Terrains

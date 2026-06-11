@@ -1,9 +1,9 @@
 using UnityEngine; 
 public class CameraFollow : MonoBehaviour 
 { 
-    public Transform target; 
+    public Transform target;
     public float smoothSpeed = 0.125f; 
-    public Vector3 offset; 
+    public Vector3 offset; //set z to -5 in inspector, also this can be changed by other things
     void LateUpdate() 
     { 
         if (target == null) return; 

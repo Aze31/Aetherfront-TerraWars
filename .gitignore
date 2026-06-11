@@ -90,7 +90,14 @@ InitTestScene*.unity*
 /[Aa]ssets/Addressables_Temp*
 
 #TextMeshPro asset doesn't need to be included
-/[Aa]ssets/TextMesh Pro/
+# Ignore TMP auto-generated font atlases
+Assets/TextMesh Pro/**/*.asset.meta
+Assets/TextMesh Pro/**/*.png
+Assets/TextMesh Pro/**/*.tga
+
+# But keep the settings file
+!Assets/TextMesh Pro/Resources/TMP Settings.asset
+
 
 # By default, Addressables content builds will generate addressables_content_state.bin
 # files in platform-specific subfolders, for example:
