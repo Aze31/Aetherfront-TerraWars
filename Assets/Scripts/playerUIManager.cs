@@ -25,6 +25,7 @@ public class playerUIManager : MonoBehaviour
             collectionDisplaycanvas.SetActive(false);
         }
     }
+    //checks for button being pressed
     public void OnButtonPressed(Button button)
     {
         if(button == incCopies)

@@ -32,10 +32,8 @@ A Unit is "next" to another unit when it is one square ahead, behind, to the lef
 A unit is "adjacent" to another unit when it is one sqpare from another unit (including diagonals)
 A Unit can only be placed on a Terrain you control, but afterwards it can move to an opponent's Terrain
 
-
 --Tactic--
 A tactic is a card that takes no space on the board, and can have a variety of effects.
-
 
 --Abilities--
 FLYING: Units that have Flying can cross any terrain that isn't a no-fly zone. Additionally, Flying Units cannot be attacked by units without FLying.
@@ -45,7 +43,7 @@ RANGE1: Units with Range 1 can attack all Units next to it and all flying units 
 
 now for the general stuff:
 
---WIN CONDITIONS--
+--LOSE CONDITIONS--
 A player who decks (attempts to draw from an empty deck) loses the game.
 A player who loses all of their Health loses the game.
 A player who triggers an ability that tells them to win the game loses the game.
@@ -55,8 +53,10 @@ Each player's starting hand is 6 cards randomly selected from their deck.
 At the beginning of each turn, the players draw one card.
 
 --DECK LIMITS--
-Early game: 40-card deck minimum. 
-After the player acquires more powerful and new cards, the minimum increases to 60.
+40-card deck minimum. 
 The player may modify their deck as they like between battles. (if the program works right that is)
 
---
+--TURN STRUCTURE--
+The first thing that happens each turn is the draw step. Afterwards, the player gains Aether 
+equal to 1 plus the amount of Terrain they control. 
+Next, the player can choose to place one of the Terrains in their hand onto the Battlefield. (only one per turn)

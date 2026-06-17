@@ -15,7 +15,6 @@ public static class CardLibrary
     }
     public enum Ability
     {
-        //I have to add a null for the ability and passcond enums later for manager's processing to work
         FLYING,
         DIG,
         INVISIBLE,
@@ -23,13 +22,15 @@ public static class CardLibrary
         SWIM,
         SWIMONLY,
         RANGE1,
-        RANGE2
+        RANGE2,
+        NONE
     }
     public enum PassCondition
     {
         SWIM,
         DIG,
         FLYING,
+        NONE // default i think
     }
     public static List<Unit> Units = new List<Unit>();
     public static List<Tactic> Tactics = new List<Tactic>();
@@ -50,6 +51,7 @@ public static class CardLibrary
             new Unit("Catacomb Stalker", 2, 2, 2, 1, Element.RUIN),
             new Unit("AshArrow Archer",2,1,2,1,Element.FIRE, Ability.RANGE1),
             new Unit("Keen-eyed Shark",1,3,2,3,Element.WATER, Ability.SWIMONLY),
+            new Unit("Airborne Guardian", 1,1,3,2,Element.WIND, Ability.FLYING),
         });
         Terrains.AddRange(new Terrain[]
         {
@@ -60,7 +62,8 @@ public static class CardLibrary
             new Terrain("Grave Ruins", 1, Element.RUIN, "Ruin Units you control take up no space here.", 0),
             new Terrain("Thunderbroken Falls", 2, Element.LIGHTNING, "Lightning and Water Units here gain Swim.",1, PassCondition.SWIM),
             new Terrain("Ancient Temple", 1, Element.RUIN, "Ruin and Nature Units next to this gain +1 Defense.", 0, Element.NATURE),
-            new Terrain("Desert",2, Element.FIRE, "Fire Units here gain +1 Defense",0)
+            new Terrain("Desert",2, Element.FIRE, "Fire Units here gain +1 Defense",0),
+            new Terrain("Thunderfalls",1,Element.LIGHTNING,"Lightning Units here (with RANGE0) gain RANGE1 and +1 Attack",0),
         });
         Tactics.AddRange(new Tactic[]
         {
@@ -68,7 +71,7 @@ public static class CardLibrary
             new Tactic("The Forked Advance", 2, new string[]{"Selected Unit moves one space.", "All Units next to it then take 1 damage."}),
             new Tactic("The Blazing Gambit", 2, new string[]{"All Units next to a Fire Terrain that are not a Fire type take 1 damage.", "All Fire Units you control gain +1 Attack."}),
             new Tactic("Sudden Shield", 1, new string[]{"Selected Unit you control gains +2 Defense this turn."}),
-            new Tactic("Ruinous Rampage", 2, new string[]{"Selected Ruin Unit you control gains +3 Attack this turn and attacks every unit next to it."})
+            new Tactic("Ruinous Rampage", 2, new string[]{"Selected Ruin Unit you control gains +3 Attack this turn and attacks every unit next to it."}),
         });
     }
 

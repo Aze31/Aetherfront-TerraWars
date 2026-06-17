@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-
+//track all of the user's information in this class
 public class Player
 {
     public string name; //prompt user for this at the beginning of the game
@@ -12,7 +12,7 @@ public class Player
     //for battle
     public List<Card> curhand = new List<Card>();
     public List<Card> battleDeck = new List<Card>();
-    
+
     public Card drawCard()
     {
         System.Random rand = new System.Random();
@@ -56,6 +56,6 @@ public class Player
     public void createStartingCollection()
     {
         addToCollection(CardLibrary.getUnitByName("Dwarf"),2);
+        addToCollection(CardLibrary.getUnitByName("Ember Drake"),3);
     }
-
 }

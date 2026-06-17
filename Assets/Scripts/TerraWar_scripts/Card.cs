@@ -1,6 +1,4 @@
-//just set up each card object in this class, and each card type.
 using System.Collections.Generic;
-using UnityEngine.Accessibility;
 using static CardLibrary;
 public class Card
 {
@@ -22,6 +20,7 @@ public class Unit : Card
         size = s;
         this.name = name;
         this.cost = cost;
+        ability = Ability.NONE;
     }
     public Unit(string name, int s, int d, int a, int cost, Element type, Ability ability)
     {
@@ -64,6 +63,7 @@ public class Terrain : Card
         this.type = type;
         this.effect = effect;
         this.cost = cost;
+        condition = PassCondition.NONE;
     }
     //use this one to specify
     public Terrain(string name, int size, Element type, string effect, int cost, PassCondition pass)
@@ -76,7 +76,7 @@ public class Terrain : Card
         condition = pass;
     }
     //to add an overlay type:
-        public Terrain(string name, int size, Element type, string effect, int cost, Element overlayType)
+    public Terrain(string name, int size, Element type, string effect, int cost, Element overlayType)
     {
         this.name = name;
         this.size = size;
@@ -84,6 +84,7 @@ public class Terrain : Card
         this.effect = effect;
         this.cost = cost;
         this.overlayType = overlayType;
+        condition = PassCondition.NONE;
     }
     //for both:
     public Terrain(string name, int size, Element type, string effect, int cost, PassCondition pass, Element overlayType)
