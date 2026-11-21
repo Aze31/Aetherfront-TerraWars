@@ -1,10 +1,11 @@
 using System.Collections.Generic;
+using UnityEngine;
 //track all of the user's information in this class
-public class Player
+public class Player : MonoBehaviour
 {
-    public string name; //prompt user for this at the beginning of the game
+    public string playerName; //prompt user for this at the beginning of the game
     public List<Card> allCards = new List<Card>(); //collection (deck and outside)
-    public List<Card> cardCollection = new List<Card>(); //all cards - deck
+    public List<Card> cardCollection = new List<Card>(); //all cards minus deck
     public List<Card> curDeck = new List<Card>(); //deck
     public double Health;
     public double Aether;
@@ -13,6 +14,12 @@ public class Player
     public List<Card> curhand = new List<Card>();
     public List<Card> battleDeck = new List<Card>();
 
+    void Start(){}
+    void Update()
+    {
+        addToCollection(CardLibrary.getUnitByName("Blazeborn Charger"),4);
+        addToCollection(CardLibrary.getTacticByName("The Forked Advance"),2);
+    }
     public Card drawCard()
     {
         System.Random rand = new System.Random();
@@ -23,6 +30,7 @@ public class Player
 
     public Card getCardByName(string name)
     {
+        //from current deck state
         foreach(Card card in battleDeck)
         {
             if(card.name == name)
@@ -46,7 +54,10 @@ public class Player
     }
     public void initBattleDeck(){battleDeck = curDeck;}
     public void loseHealth(int h){Health -= h;}
-    public void payAether(int a){Aether -=a;}
+    public void payAether(int a){
+        if(Aether >= a){Aether -=a;} 
+        else Debug.LogWarning("Can't pay Aether!");
+    }
     public void createStartingDeck()
     {
         addToDeck(CardLibrary.getTerrainByName("Volcano"), 4);
@@ -57,5 +68,29 @@ public class Player
     {
         addToCollection(CardLibrary.getUnitByName("Dwarf"),2);
         addToCollection(CardLibrary.getUnitByName("Ember Drake"),3);
+    }
+
+    //now for gameplay decision methods
+    public void activateCard(Card card)
+    {
+        payAether(card.cost);
+        //extra effects specific to a card go here from the lib
+    }
+
+    public void placeTerrain(int x, int y, int size, Terrain terrain)
+    {
+        
+    }
+    public List<Card> giveUsableCardsFromHand()
+    {
+        List<Card> availableCards = new List<Card>();
+        foreach(Card card in curhand)
+        {
+            if (card.cost <= Aether)
+            {
+                availableCards.Add(card);
+            }
+        }
+        return availableCards;
     }
 }

@@ -2,10 +2,16 @@ using UnityEngine;
 using System;
 using static CardLibrary;
 using static Player;
+using UnityEngine.UI;
 
 public class BattlefieldManager : MonoBehaviour
 {
-    
+    //another thing that could work is if I assign an object to attach to each tile object.
+    //this is probably simpler
+    public GameObject[,] fieldObject= new GameObject[5,5];
+    public GameObject selectionObject; 
+    //make an array of buttons to assign so this is easy
+    public Button[] playerButtons;
     public Tile[,] battleField = new Tile[5,5];
 
     //use this to set the current state of an empty battlefield
@@ -20,7 +26,15 @@ public class BattlefieldManager : MonoBehaviour
 
     public void setUpBattlefield()
     {
-        
+        for(int i = 0; i < 5; i++)
+        {
+            for (int j = 1; j < 5; j++)
+            {
+                //why does this error
+                //fieldObject[i,j].GetComponent<Sprite>().SetSpriteID("path");
+                fieldObject[i,j].SetActive(true);
+            }
+        }
     }
 
     //checks if two tiles are adjacent to each other
@@ -39,14 +53,9 @@ public class BattlefieldManager : MonoBehaviour
         );
     }
 
-    public void placeUnit(int x, int y, Unit unit)
+    public void placeUnitAt(int x, int y, Unit unit)
     {
-        if(unit.ability == Ability.FLYING)
-        {
-            battleField[x,y].unitFlyingHere = unit;
-        } else {
-            battleField[x,y].unitHere = unit;
-        }
+        battleField[x,y].putUnitHere(unit);
     }
     public void removeUnitsAt(int x, int y)
     {
@@ -93,9 +102,18 @@ public class Tile
         if(creatureAbility == Ability.SWIMONLY){return curTerrain.condition == PassCondition.SWIM && !groundOccupied;}
         if(creatureAbility == Ability.SWIM){return (curTerrain.condition == PassCondition.SWIM || 
             curTerrain.condition == PassCondition.NONE) && !groundOccupied;}
-        return !groundOccupied;
+        return !groundOccupied && curTerrain.condition == PassCondition.NONE;
     }
     public int getX(){return this.x;}
     public int getY(){return this.y;}
     public void setXY(int x, int y){this.x = x; this.y = y;}
+    public void putUnitHere(Unit unit)
+    {
+        if(unit.ability == Ability.FLYING){unitFlyingHere = unit;}
+        else {unitHere = unit;}
+    }
+    public void clearUnitHere(Boolean ground)
+    {
+        if(ground){unitHere = null;} else {unitFlyingHere = null;}
+    }
 }

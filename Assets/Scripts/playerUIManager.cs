@@ -3,13 +3,18 @@ using UnityEngine.InputSystem;
 using UnityEngine.UI;
 public class playerUIManager : MonoBehaviour
 {
+    //manages canvas screens for the player
+    //make two canvas screens: one for deck editing and one for card inspection
+
     public GameObject deckDisplayCanvas;
     public GameObject collectionDisplaycanvas;
+    public GameObject inspectorCanvas;
     public Button buttonAdd;
     public Button buttonRemove;
     public Button incCopies;
     public Button decCopies;
     public int setCopies;
+
     void Start() //initialize both canvases to be not active
     {
         deckDisplayCanvas.SetActive(false);

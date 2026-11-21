@@ -20,6 +20,7 @@ public class Unit : Card
         size = s;
         this.name = name;
         this.cost = cost;
+        this.type = type;
         ability = Ability.NONE;
     }
     public Unit(string name, int s, int d, int a, int cost, Element type, Ability ability)
@@ -29,6 +30,29 @@ public class Unit : Card
         size = s;
         this.name = name;
         this.cost = cost;
+        this.type = type;
+        this.ability = ability;
+    }
+    //below def size = 1
+    public Unit(string name, int d, int a, int cost, Element type)
+    {   
+        ATTACK = a;
+        DEFENSE = d;
+        size = 1;
+        this.name = name;
+        this.cost = cost;
+        this.type = type;
+        this.ability = Ability.NONE;
+        
+    }
+    public Unit(string name, int d, int a, int cost, Element type, Ability ability)
+    {
+        ATTACK = a;
+        DEFENSE = d;
+        size = 1;
+        this.name = name;
+        this.cost = cost;
+        this.type = type;
         this.ability = ability;
     }
 

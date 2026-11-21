@@ -5,7 +5,7 @@ THIS FILE GIVES AN IN-DEPTH EXPLANATION OF HOW THE CARD GAME FUNCTIONS.*
 The unit of elemental energy, known as Aether, is used to call Units and put Tactics in motion. 
 There are two sources of Aether in a game:
     1. Each player gains +1 Aether at the beginning of their turn. This happenes before that player draws.
-    2. Terrains each give the user +1 Aether, but this amount can be modified by the Terrain's own effects.
+    2. Terrains each give the user +1 Aether at the start of the turn, but this amount can be modified by the Terrain's own effects.
 
 Aether can be used to pay the call cost of Units, and the cost of Tactics. Each turn, you can activate as many Tactics, and
 call as many units as your Aether allows you to. You may only place one Terrain per turn, and Units can only be placed if there is 
@@ -21,7 +21,8 @@ but Units that need land to walk on cannot cross Ocean terrains. A Unit can only
 
 As the game begins, players may only place Terrain on their side of the board. As they accumulate more terrain, they may place any terrains
 adjacent to other terrain they control, as long as there's enough space. Some terrain cards can "overlay" others, meaning it can
-be placed on top of other Terrain with certain properties. For instance, Volcano has overlay over Water type Terrain.
+be placed on top of other Terrain with certain properties. For instance, Volcano has overlay over Water type Terrain, so it can be placed 
+on top of Water type terrains that you and the opponent controls if it is adjacent to your side of the board and/or a terrain you control.
 
 --Unit--
 A Unit is what makes up your line of offense, and defense. Units take up an amount of space equal to its size
@@ -36,10 +37,12 @@ A Unit can only be placed on a Terrain you control, but afterwards it can move t
 A tactic is a card that takes no space on the board, and can have a variety of effects.
 
 --Abilities--
-FLYING: Units that have Flying can cross any terrain that isn't a no-fly zone. Additionally, Flying Units cannot be attacked by units without FLying.
+FLYING: Units that have Flying can cross any terrain that isn't a no-fly zone. Additionally, Flying Units cannot be attacked by units without FLying. However, they may attack Units without flying.
 DIG: When a Unit has dig, it cannot be attacked by any Units without Dig. Additionally, you may decide to 'surface' a Unit that has Dig so it can be attacked, and
-attack other Units.
-RANGE1: Units with Range 1 can attack all Units next to it and all flying units next to it.
+attack other Units, and defend you.
+SWIM: Units with Swim can cross water terrains
+RANGE1: Units with Range 1 can attack all Units adjacent to it (instead of next to it) and all flying units next to it.
+RANGE2: Units with Range 2 can attack all Units adjacent to it and next to it even if they have flying.
 
 now for the general stuff:
 
