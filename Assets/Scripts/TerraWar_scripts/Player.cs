@@ -1,29 +1,56 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
-//track all of the user's information in this class
+using UnityEngine.InputSystem;
+
 public class Player : MonoBehaviour
 {
+    private static Player instance;
+
+    public static Player GetInstance()
+    {
+        return instance;
+    }
+
+    private void Awake()
+    {
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        instance = this;
+
+        // Optional if you want the player object to survive scene loads
+        DontDestroyOnLoad(gameObject);
+    }
     public string playerName; //prompt user for this at the beginning of the game
     public List<Card> allCards = new List<Card>(); //collection (deck and outside)
     public List<Card> cardCollection = new List<Card>(); //all cards minus deck
     public List<Card> curDeck = new List<Card>(); //deck
-    public double Health;
+    public double Health; //dead if below zero
     public double Aether;
+    private CardLibrary lib = CardLibrary.getInstance();
 
     //for battle
     public List<Card> curhand = new List<Card>();
     public List<Card> battleDeck = new List<Card>();
 
-    void Start(){}
+    void Start()
+    {
+        createStartingDeck();
+        initBattleDeck();
+    }
     void Update()
     {
-        addToCollection(CardLibrary.getUnitByName("Blazeborn Charger"),4);
-        addToCollection(CardLibrary.getTacticByName("The Forked Advance"),2);
+        
     }
     public Card drawCard()
     {
         System.Random rand = new System.Random();
-        Card randomCard = battleDeck[rand.Next(1,battleDeck.Count)];
+        // Card randomCard = battleDeck[rand.Next(battleDeck.Count)];
+        Card randomCard = battleDeck[Random.Range(1,battleDeck.Count)];
         battleDeck.Remove(randomCard);
         return randomCard;
     }
@@ -60,14 +87,21 @@ public class Player : MonoBehaviour
     }
     public void createStartingDeck()
     {
-        addToDeck(CardLibrary.getTerrainByName("Volcano"), 4);
-        addToDeck(CardLibrary.getUnitByName("Ember Drake"), 4);
-        addToDeck(CardLibrary.getTacticByName("The Forked Advance"), 2);
+        addToDeck(lib.getTerrainByName("Ocean"), 4);
+        addToDeck(lib.getUnitByName("Aqua Scout"), 4);
+        addToDeck(lib.getUnitByName("Brave Seagull"), 3);
+        addToDeck(lib.getUnitByName("Tidebender Serpent"), 4);
+        addToDeck(lib.getUnitByName("Great Green Shark"), 2);
+        addToDeck(lib.getTerrainByName("Beach"),5);
+        addToDeck(lib.getTerrainByName("Frozen Lake"),4);
+        addToDeck(lib.getTacticByName("High Tide"),2);
+        addToDeck(lib.getTacticByName("Sudden Shield"),2);
+        //above is 30
     }
     public void createStartingCollection()
     {
-        addToCollection(CardLibrary.getUnitByName("Dwarf"),2);
-        addToCollection(CardLibrary.getUnitByName("Ember Drake"),3);
+        addToCollection(lib.getUnitByName("Grove Sentinel"),3);
+        addToCollection(lib.getUnitByName("Dwarf"),3);
     }
 
     //now for gameplay decision methods
@@ -92,5 +126,18 @@ public class Player : MonoBehaviour
             }
         }
         return availableCards;
+    }
+    public void DrawHand()
+    {
+        //a full 6 starting hand
+        List<Card> tempList = new List<Card>
+        {
+            drawCard(),drawCard(),drawCard(),drawCard(),drawCard(),drawCard()
+        };
+        curhand = tempList;
+        foreach(Card card in curhand)
+        {
+            Debug.Log("you drew " + card.name + " in starting hand.");
+        }
     }
 }

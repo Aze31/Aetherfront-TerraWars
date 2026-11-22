@@ -1,5 +1,5 @@
 THIS FILE GIVES AN IN-DEPTH EXPLANATION OF HOW THE CARD GAME FUNCTIONS.*
-*as the game is developed that is. this is all theoretical and written before the game is made
+*as the game is developed that is. this is the set of my goals and was written before the game was programmed
 
 --Aether--
 The unit of elemental energy, known as Aether, is used to call Units and put Tactics in motion. 
@@ -11,6 +11,7 @@ Aether can be used to pay the call cost of Units, and the cost of Tactics. Each 
 call as many units as your Aether allows you to. You may only place one Terrain per turn, and Units can only be placed if there is 
 enough space for it on the Terrain you place it. You cannot place two Units on the same Terrain unless one of them has FLYING or DIG,
 or a size of 0.
+Aether is never lost to state-based actions or turn passes. You can save your Aether between turns if you do not use it.
 
 --Terrains--
 Terrains have an elemental affinity, as well as special bonuses when Units with a matching element are placed on them.

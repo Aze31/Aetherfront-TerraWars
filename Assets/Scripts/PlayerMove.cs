@@ -8,11 +8,13 @@ public class PlayerMove : MonoBehaviour
     private Rigidbody2D rb; 
     private PlayerInput playerInput; 
     private InputAction moveAction; 
+    public Animator anim;
 
     void Awake() 
     { 
         rb = GetComponent<Rigidbody2D>(); 
         playerInput = GetComponent<PlayerInput>(); 
+        anim = GetComponent<Animator>();
 
         if (playerInput == null) 
         { 
@@ -36,7 +38,35 @@ public class PlayerMove : MonoBehaviour
         else 
         { 
             Debug.LogWarning("Move action is null in Update()"); 
-        } 
+        }
+        if (Keyboard.current.wKey.isPressed)
+        {
+            anim.SetBool("WUp", true);
+        }        else
+        {
+            anim.SetBool("WUp", false);
+        }
+            if (Keyboard.current.aKey.isPressed)
+        {
+            anim.SetBool("WLeft", true);
+        }        else
+        {
+            anim.SetBool("WLeft", false);
+        }
+            if (Keyboard.current.sKey.isPressed)
+        {
+            anim.SetBool("WDown",true);
+        }        else
+        {
+            anim.SetBool("WDown", false);
+        }
+            if (Keyboard.current.dKey.isPressed)
+        {
+            anim.SetBool("WRight", true);
+        }         else
+        {
+            anim.SetBool("WRight", false);
+        }
     } 
     void FixedUpdate() //wonder why this has to be fixedUpdate
     { 

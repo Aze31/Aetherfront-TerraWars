@@ -1,0 +1,431 @@
+fileFormatVersion: 2
+guid: 8784333c6295b8445b537214af4f586d
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: 945921984298787424
+    second: ember_drake_sprite-removebg-preview_0
+  - first:
+      213: -9004428851164163127
+    second: ember_drake_sprite-removebg-preview_1
+  - first:
+      213: 910369081548783709
+    second: ember_drake_sprite-removebg-preview_2
+  - first:
+      213: -482694159332420322
+    second: ember_drake_sprite-removebg-preview_3
+  - first:
+      213: 835189219864327464
+    second: ember_drake_sprite-removebg-preview_4
+  - first:
+      213: -8933720279304620642
+    second: ember_drake_sprite-removebg-preview_5
+  - first:
+      213: 8708916186206108479
+    second: ember_drake_sprite-removebg-preview_6
+  - first:
+      213: -6846613712311084561
+    second: ember_drake_sprite-removebg-preview_7
+  - first:
+      213: 1152971827178155563
+    second: ember_drake_sprite-removebg-preview_8
+  - first:
+      213: -3521958113560871842
+    second: ember_drake_sprite-removebg-preview_9
+  - first:
+      213: 9017642225101318306
+    second: ember_drake_sprite-removebg-preview_10
+  - first:
+      213: 742596770165341257
+    second: ember_drake_sprite-removebg-preview_11
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 163
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 062ac537807902d00800000000000000
+      internalID: 945921984298787424
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_1
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 163
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 9c3d419daa7d90380800000000000000
+      internalID: -9004428851164163127
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_2
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 163
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: d50c6383bd742ac00800000000000000
+      internalID: 910369081548783709
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_3
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 163
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e15d5d138302d49f0800000000000000
+      internalID: -482694159332420322
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_4
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 163
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 825bf32ab20379b00800000000000000
+      internalID: 835189219864327464
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_5
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 163
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e9538552dbc050480800000000000000
+      internalID: -8933720279304620642
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_6
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 1
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: f3bf67921294cd870800000000000000
+      internalID: 8708916186206108479
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_7
+      rect:
+        serializedVersion: 2
+        x: 128
+        y: 1
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fe911638a11fbf0a0800000000000000
+      internalID: -6846613712311084561
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_8
+      rect:
+        serializedVersion: 2
+        x: 256
+        y: 1
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: b2eacf2a4cd200010800000000000000
+      internalID: 1152971827178155563
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_9
+      rect:
+        serializedVersion: 2
+        x: 384
+        y: 1
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: e5c366f71cd7f1fc0800000000000000
+      internalID: -3521958113560871842
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_10
+      rect:
+        serializedVersion: 2
+        x: 512
+        y: 1
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 2a82ab283d9152d70800000000000000
+      internalID: 9017642225101318306
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: ember_drake_sprite-removebg-preview_11
+      rect:
+        serializedVersion: 2
+        x: 640
+        y: 1
+        width: 128
+        height: 162
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 94cbe09f3db3e4a00800000000000000
+      internalID: 742596770165341257
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 8cae5052334277c49959d5c09edb3240
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":6.0,"y":2.0},"gridSpriteSize":{"x":128.0,"y":162.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":2,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      ember_drake_sprite-removebg-preview_0: 945921984298787424
+      ember_drake_sprite-removebg-preview_1: -9004428851164163127
+      ember_drake_sprite-removebg-preview_10: 9017642225101318306
+      ember_drake_sprite-removebg-preview_11: 742596770165341257
+      ember_drake_sprite-removebg-preview_2: 910369081548783709
+      ember_drake_sprite-removebg-preview_3: -482694159332420322
+      ember_drake_sprite-removebg-preview_4: 835189219864327464
+      ember_drake_sprite-removebg-preview_5: -8933720279304620642
+      ember_drake_sprite-removebg-preview_6: 8708916186206108479
+      ember_drake_sprite-removebg-preview_7: -6846613712311084561
+      ember_drake_sprite-removebg-preview_8: 1152971827178155563
+      ember_drake_sprite-removebg-preview_9: -3521958113560871842
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

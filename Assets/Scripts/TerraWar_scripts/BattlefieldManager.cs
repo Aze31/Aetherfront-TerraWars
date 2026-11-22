@@ -3,16 +3,41 @@ using System;
 using static CardLibrary;
 using static Player;
 using UnityEngine.UI;
+using JetBrains.Annotations;
+using UnityEditor.Rendering.LookDev;
 
 public class BattlefieldManager : MonoBehaviour
 {
+
+    private static BattlefieldManager instance;
+    public static BattlefieldManager getInstance()
+    {
+        return instance;
+    }
+
+    private void Awake()
+    {
+        if (instance != null && instance != this)
+        {
+            Destroy(gameObject);
+            return;
+        }
+        instance = this;
+        DontDestroyOnLoad(gameObject);
+    }
     //another thing that could work is if I assign an object to attach to each tile object.
     //this is probably simpler
-    public GameObject[,] fieldObject= new GameObject[5,5];
+    public GameObject[,] fieldObject;
     public GameObject selectionObject; 
     //make an array of buttons to assign so this is easy
     public Button[] playerButtons;
     public Tile[,] battleField = new Tile[5,5];
+    [SerializeField]
+    private Transform HandScrollView; // for hand visualization
+    [SerializeField]
+    private cardPrefab cardPrefabForHand;
+    private Player player = Player.GetInstance();
+
 
     //use this to set the current state of an empty battlefield
     public void initTiles(){
@@ -76,6 +101,28 @@ public class BattlefieldManager : MonoBehaviour
         {
             battleField[x,y].unitFlyingHere = null;
         }
+    }
+
+    public void updateHand()
+    {
+        foreach (Transform child in HandScrollView)
+        {
+            Destroy(child.gameObject);
+        }
+        foreach(Card card in Player.GetInstance().curhand)
+        {
+                //idu so this may not work
+                cardPrefab prefab = Instantiate(cardPrefabForHand, HandScrollView);
+
+                prefab.setCardTo(card); // this handles the card's type
+                prefab.place = cardPrefab.placement.HAND;
+                Debug.Log("attempted to update hand ui");
+            
+        }
+    }
+    public bool hasTerrain(int x, int y)
+    {
+        return battleField[x,y].curTerrain != null;
     }
 }
 

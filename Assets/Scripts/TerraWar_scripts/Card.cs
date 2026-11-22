@@ -13,6 +13,7 @@ public class Unit : Card
     public int ATTACK;
     public Element type;
     public Ability ability;
+    public Ability ability1;
     public Unit(string name, int s, int d, int a, int cost, Element type)
     {
         ATTACK = a;
@@ -55,7 +56,17 @@ public class Unit : Card
         this.type = type;
         this.ability = ability;
     }
-
+    public Unit(string name, int d, int a, int cost, Element type, Ability ability, Ability ability1)
+    {
+        ATTACK = a;
+        DEFENSE = d;
+        size = 1;
+        this.name = name;
+        this.cost = cost;
+        this.type = type;
+        this.ability = ability;
+        this.ability1 = ability1;
+    }
 }
 
 public class Tactic : Card

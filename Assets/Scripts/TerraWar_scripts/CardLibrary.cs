@@ -1,7 +1,16 @@
 using UnityEngine;
 using System.Collections.Generic;
-public static class CardLibrary
+public class CardLibrary
 {
+    private static CardLibrary instance;
+    public static CardLibrary getInstance()
+    {
+        if(instance == null){
+            instance = new CardLibrary();
+            initializeLibrary();
+        }
+        return instance;
+    }
     public enum Element
     {
         FIRE,
@@ -13,16 +22,17 @@ public static class CardLibrary
         COSMIC,
         RUIN
     }
+    
     public enum Ability
     {
         FLYING,
         DIG,
-        INVISIBLE,
-        //to differentiate between land+ocean and ocean
-        SWIM,
+        INVISIBLE, 
+        SWIM, //to differentiate between land+ocean and ocean only
         SWIMONLY,
         RANGE1,
         RANGE2,
+        BURN, //defaults to 1
         NONE
     }
     public enum PassCondition
@@ -39,16 +49,23 @@ public static class CardLibrary
     
     public static void initializeLibrary()
     {        
-        //name, size, defense, attack, cost
+        //there may be a problem with AddRange
+        //name, size, defense, attack, cost, type, abilities (if any)
+        //I will likely end up increasing cost during playtesting and tuning before anything else
         Units.AddRange(new Unit[]
         {
             new Unit("Ember Drake", 1, 1, 2, 1, Element.FIRE, Ability.FLYING),
+            new Unit("Warrior of Flames",1,3,2, Element.FIRE, Ability.NONE),
+            new Unit("HeatQuill Hedgehog",2,2,2,Element.FIRE, Ability.BURN),
             new Unit("Aqua Scout",1,2,1,1, Element.WATER), //should this guy know how to swim?
             new Unit("Grove Sentinel", 1, 3, 1, 1, Element.NATURE),
+            new Unit("Dwarf", 2, 1, 2, Element.NATURE),
             new Unit("Grave-Burrow Lurker", 1, 2, 2, 1, Element.RUIN, Ability.DIG),
-            new Unit("Ancient Ruins Dragon",5,5,3,4,Element.RUIN, Ability.FLYING),
+            new Unit("Ancient Ruins Dragon",5,5,3,9,Element.RUIN, Ability.FLYING),
             new Unit("Blazehorn Charger", 2, 2, 3, 1, Element.FIRE),
-            new Unit("Tidebender Serpent", 2, 3, 2, 2, Element.WATER, Ability.SWIMONLY),
+            new Unit("Tidebender Serpent", 2, 3, 2, 3, Element.WATER, Ability.SWIMONLY),
+            new Unit("Great Green Shark",4,3,7,Element.WATER, Ability.SWIMONLY),
+            new Unit("Brave Seagull",1,1,2,Element.WATER, Ability.FLYING),
             new Unit("Catacomb Stalker", 2, 2, 2, 1, Element.RUIN),
             new Unit("AshArrow Archer",2,1,2,1,Element.FIRE, Ability.RANGE1),
             new Unit("Keen-eyed Shark",1,3,2,3,Element.WATER, Ability.SWIMONLY),
@@ -56,6 +73,7 @@ public static class CardLibrary
             new Unit("Molten Golem", 3,4,4,4,Element.FIRE, Ability.NONE),
             new Unit("Flame Warrior",1,2,2,2,Element.FIRE),
             new Unit("Lightning Artist",1,2,2,2,Element.LIGHTNING, Ability.RANGE1), //remove r1?
+            new Unit("Echoed Wyvern", 0, 2, 3, 3, Element.COSMIC, Ability.INVISIBLE)
             
         });
         Terrains.AddRange(new Terrain[]
@@ -65,6 +83,7 @@ public static class CardLibrary
             new Terrain("Volcano", 1, Element.FIRE, "Fire Units here gain +1 Attack.", 0, Element.WATER),
             new Terrain("Mountains",2,Element.EARTH, "Earth and Wind Units here gain +1 Defense.", 1),
             new Terrain("Ocean", 1, Element.WATER, "Water Units here gain +1 Defense.", 0, PassCondition.SWIM),
+            new Terrain("Beach", 1, Element.WATER, "", 0),
             new Terrain("Grave Ruins", 1, Element.RUIN, "Ruin Units you control take up no space here.", 0),
             new Terrain("Thunderbroken Plain", 2, Element.LIGHTNING, "Lightning and Water Units here gain Swim.",1, PassCondition.SWIM),
             new Terrain("Ancient Temple", 1, Element.RUIN, "Ruin and Nature Units next to this gain +1 Defense.", 0, Element.NATURE),
@@ -80,19 +99,22 @@ public static class CardLibrary
             new Tactic("Sudden Shield", 1, new string[]{"Selected Unit you control gains +2 Defense this turn."}),
             new Tactic("Draconic Flare", 4, new string[]{"Selected Fire Unit you control gains +1 Attack.", "That unit deals damage to all areas."}),
             new Tactic("Ruinous Rampage", 2, new string[]{"Selected Ruin Unit you control gains +3 Attack this turn and attacks every unit next to it."}),
+            new Tactic("High Tide", 2, new string[]{"Gain 4 Aether"})
         });
     }
 
-    public static Unit getUnitByName(string name){
+
+    //currently none of these things are working currently and all are throwing warning sand returning null
+    public Unit getUnitByName(string name){
         foreach (Unit unit in Units)
         {
             if(unit.name == name){return unit;}
         }    
-        Debug.LogWarning("Unit" + name + " not found!");
+        Debug.LogWarning("Unit " + name + " not found!");
         return null;
     }
 
-    public static Tactic getTacticByName(string name)
+    public Tactic getTacticByName(string name)
     {
         foreach(Tactic tactic in Tactics)
         {
@@ -101,15 +123,16 @@ public static class CardLibrary
                 return tactic;
             }
         }
+        Debug.LogWarning("Tactic "+ name + " not found");
         return null;
     }
-    public static Terrain getTerrainByName(string name)
+    public Terrain getTerrainByName(string name)
     {
         foreach (Terrain terrain in Terrains)
         {
             if(terrain.name == name){return terrain;}
         }    
-        UnityEngine.Debug.LogWarning("Terrain" + name + " not found!");
+        Debug.LogWarning("Terrain " + name + " not found!");
         return null;
     }
 
