@@ -3976,6 +3976,7 @@ GameObject:
   - component: {fileID: 892893040}
   - component: {fileID: 892893039}
   - component: {fileID: 892893038}
+  - component: {fileID: 1461239875}
   m_Layer: 5
   m_Name: DeckCanvas
   m_TagString: Untagged
@@ -4023,6 +4024,20 @@ MonoBehaviour:
   m_DefaultSpriteDPI: 96
   m_DynamicPixelsPerUnit: 1
   m_PresetInfoIsWorld: 0
+--- !u!114 &1461239875
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 892893037}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1200a08bb87589046afc09cb10c4a22e, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::DeckUIManager
+  deckPanel: {fileID: 1913078208}
+  cardPrefab: {fileID: 8568901627728265122, guid: a06996d75120d3541beddb43faf4fc27, type: 3}
 --- !u!223 &892893040
 Canvas:
   m_ObjectHideFlags: 0
@@ -4056,7 +4071,7 @@ RectTransform:
   m_GameObject: {fileID: 892893037}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
   - {fileID: 1904615509}
