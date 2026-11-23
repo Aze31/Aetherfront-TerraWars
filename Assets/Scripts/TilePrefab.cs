@@ -35,7 +35,7 @@ public class TilePrefab : MonoBehaviour
 
     private void Update()
     {
-        if (isMouseOver && manager != null && manager.hasTerrain(this.x, this.y))
+        if (isMouseOver && manager != null && !manager.hasTerrain(this.x, this.y))
         {
             //increase size and change color when the mouse is over it if the tile is available
             RectTransform rectTransform = GetComponent<RectTransform>();

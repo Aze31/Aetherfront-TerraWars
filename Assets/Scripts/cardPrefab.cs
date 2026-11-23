@@ -3,10 +3,12 @@ using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using UnityEngine.UI;
 using static Card;
 using static CardLibrary;
 
-public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler
+public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler,
+    IBeginDragHandler, IDragHandler, IEndDragHandler
 {
     //TODO: later, add size modifier for the entire card's size based on the terrain/unit size
     public enum placement
@@ -14,7 +16,9 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         HAND,
         BATTLE,
         DISCARD,
-        DISPLAY
+        DISPLAY,
+        COLLECTION,
+        DECK
     }
     public Card curCard;
     public GameObject border; //to set color
@@ -24,8 +28,19 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     private Boolean blank; //is the card blank? ig
     private Sprite curSprite;
     public placement place;
-    private Vector2 originalPose;
-    private bool beingHeld = false;
+    public bool isDraggable;
+    private CollectionUIManager collectionUIManager;
+    private Transform originalParent;
+    private Vector3 originalLocalPosition;
+    private Quaternion originalLocalRotation;
+    private Vector3 originalLocalScale;
+    private int originalSiblingIndex;
+    private RectTransform dragLayer;
+    private Canvas dragCanvas;
+    private CanvasGroup dragCanvasGroup;
+    private bool originalBlocksRaycasts;
+    private bool addedCanvasGroup;
+    private bool isDragging;
     private Vector3 originalScale;
     private bool pointerOverDisplayCard;
     
@@ -69,14 +84,15 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     }
     void Start()
     {
-        //track its original position(good since it always re-inits all cards)
-        originalPose = transform.position;
         originalScale = transform.localScale;
     }
 
     public void OnPointerEnter(PointerEventData eventData)
     {
-        if (place != placement.DISPLAY || pointerOverDisplayCard)
+        if ((place != placement.DISPLAY &&
+             place != placement.COLLECTION &&
+             place != placement.DECK) ||
+            pointerOverDisplayCard)
         {
             return;
         }
@@ -96,36 +112,97 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         transform.localScale = originalScale;
         pointerOverDisplayCard = false;
     }
-    void Update()
+    public void ConfigureDrag(CollectionUIManager manager, bool canDrag)
     {
-        if(place == placement.HAND)
-        {
-            // if in hand, make the object draggable
-
-        }
+        collectionUIManager = manager;
+        isDraggable = canDrag;
     }
-    //also im adding in root and parent to 
+
     public void OnBeginDrag(PointerEventData eventData)
     {
-        //will add other conditions later
-        if(place == placement.HAND){
-            beingHeld = true;
-            originalPose = transform.position;
+        if (!isDraggable ||
+            collectionUIManager == null ||
+            (place != placement.COLLECTION && place != placement.DECK))
+        {
+            return;
         }
 
+        Canvas parentCanvas = GetComponentInParent<Canvas>();
+        if (parentCanvas == null || parentCanvas.rootCanvas == null)
+        {
+            Debug.LogError("Draggable cards must be placed under a Canvas.", this);
+            return;
+        }
+
+        dragCanvas = parentCanvas.rootCanvas;
+        dragLayer = dragCanvas.transform as RectTransform;
+        if (dragLayer == null)
+        {
+            Debug.LogError("The card's root Canvas must have a RectTransform.", dragCanvas);
+            return;
+        }
+
+        originalParent = transform.parent;
+        originalLocalPosition = transform.localPosition;
+        originalLocalRotation = transform.localRotation;
+        originalLocalScale = transform.localScale;
+        originalSiblingIndex = transform.GetSiblingIndex();
+
+        dragCanvasGroup = GetComponent<CanvasGroup>();
+        addedCanvasGroup = dragCanvasGroup == null;
+        if (addedCanvasGroup)
+        {
+            dragCanvasGroup = gameObject.AddComponent<CanvasGroup>();
+        }
+
+        originalBlocksRaycasts = dragCanvasGroup.blocksRaycasts;
+        dragCanvasGroup.blocksRaycasts = false;
+        transform.SetParent(dragLayer, true);
+        transform.SetAsLastSibling();
+        isDragging = true;
     }
+
     public void OnDrag(PointerEventData eventData)
     {
-        if(place == placement.HAND)
+        if (!isDragging)
         {
-            transform.position = Input.mousePosition;
+            return;
+        }
+
+        if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
+                dragLayer,
+                eventData.position,
+                dragCanvas.worldCamera,
+                out Vector3 worldPosition))
+        {
+            transform.position = worldPosition;
         }
     }
-    //now based on end pose snap back to original pose once let go
+
     public void OnEndDrag(PointerEventData eventData)
     {
-        beingHeld = false;
-        transform.position = originalPose;
+        if (!isDragging)
+        {
+            return;
+        }
+
+        isDragging = false;
+        if (collectionUIManager.TryTransferCard(curCard, place, eventData.position))
+        {
+            Destroy(gameObject);
+            return;
+        }
+
+        transform.SetParent(originalParent, false);
+        transform.localPosition = originalLocalPosition;
+        transform.localRotation = originalLocalRotation;
+        transform.localScale = originalLocalScale;
+        transform.SetSiblingIndex(originalSiblingIndex);
+        dragCanvasGroup.blocksRaycasts = originalBlocksRaycasts;
+        if (addedCanvasGroup)
+        {
+            Destroy(dragCanvasGroup);
+        }
     }
 
 }

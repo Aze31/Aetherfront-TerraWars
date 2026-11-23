@@ -29,7 +29,7 @@ public class Player : MonoBehaviour
     public List<Card> allCards = new List<Card>(); //collection (deck and outside)
     public List<Card> cardCollection = new List<Card>(); //all cards minus deck
     public List<Card> curDeck = new List<Card>(); //deck
-    public double Health; //dead if below zero
+    public double Health = 50; //dead if below zero
     public double Aether;
     private CardLibrary lib = CardLibrary.getInstance();
 
@@ -40,6 +40,7 @@ public class Player : MonoBehaviour
     void Start()
     {
         createStartingDeck();
+        createStartingCollection();
         initBattleDeck();
     }
     void Update()
@@ -87,16 +88,18 @@ public class Player : MonoBehaviour
     }
     public void createStartingDeck()
     {
+        //tune this deck in the sims
         addToDeck(lib.getTerrainByName("Ocean"), 4);
         addToDeck(lib.getUnitByName("Aqua Scout"), 4);
         addToDeck(lib.getUnitByName("Brave Seagull"), 3);
         addToDeck(lib.getUnitByName("Tidebender Serpent"), 4);
         addToDeck(lib.getUnitByName("Great Green Shark"), 2);
-        addToDeck(lib.getTerrainByName("Beach"),5);
+        addToDeck(lib.getTerrainByName("Beach"),6);
         addToDeck(lib.getTerrainByName("Frozen Lake"),4);
         addToDeck(lib.getTacticByName("High Tide"),2);
         addToDeck(lib.getTacticByName("Sudden Shield"),2);
-        //above is 30
+        addToDeck(lib.getTerrainByName("Marsh"),3);
+        //above is 35
     }
     public void createStartingCollection()
     {

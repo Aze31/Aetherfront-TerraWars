@@ -5,6 +5,8 @@ using static Player;
 using UnityEngine.UI;
 using JetBrains.Annotations;
 using UnityEditor.Rendering.LookDev;
+using UnityEngine.InputSystem;
+using System.Collections;
 
 public class BattlefieldManager : MonoBehaviour
 {
@@ -25,10 +27,15 @@ public class BattlefieldManager : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(gameObject);
     }
+    private void Start()
+    {
+        player = Player.GetInstance(); // to make sure we're getting the right instance of player
+    }
+
     //another thing that could work is if I assign an object to attach to each tile object.
     //this is probably simpler
     public GameObject[,] fieldObject;
-    public GameObject selectionObject; 
+    public GameObject AetherDisplay; 
     //make an array of buttons to assign so this is easy
     public Button[] playerButtons;
     public Tile[,] battleField = new Tile[5,5];
@@ -37,6 +44,9 @@ public class BattlefieldManager : MonoBehaviour
     [SerializeField]
     private cardPrefab cardPrefabForHand;
     private Player player = Player.GetInstance();
+    private const float HandCardDisplayScale = 35f;
+    private const float HandCardSpacing = 8f;
+    private const int HandCardsPerRow = 2;
 
 
     //use this to set the current state of an empty battlefield
@@ -105,24 +115,124 @@ public class BattlefieldManager : MonoBehaviour
 
     public void updateHand()
     {
-        foreach (Transform child in HandScrollView)
+        if (HandScrollView == null)
         {
-            Destroy(child.gameObject);
+            Debug.LogError("BattlefieldManager requires its Hand Scroll View transform.", this);
+            return;
         }
-        foreach(Card card in Player.GetInstance().curhand)
-        {
-                //idu so this may not work
-                cardPrefab prefab = Instantiate(cardPrefabForHand, HandScrollView);
 
-                prefab.setCardTo(card); // this handles the card's type
-                prefab.place = cardPrefab.placement.HAND;
-                Debug.Log("attempted to update hand ui");
-            
+        ScrollRect scrollRect = HandScrollView.GetComponent<ScrollRect>();
+        RectTransform content = scrollRect != null
+            ? scrollRect.content
+            : HandScrollView as RectTransform;
+
+        if (content == null)
+        {
+            Debug.LogError("Hand Scroll View must have a ScrollRect with content assigned.", HandScrollView);
+            return;
         }
+
+        if (cardPrefabForHand == null)
+        {
+            Debug.LogError("BattlefieldManager requires a card prefab for the hand.", this);
+            return;
+        }
+
+        Canvas prefabCanvas = cardPrefabForHand.GetComponentInChildren<Canvas>();
+        RectTransform cardRect = prefabCanvas != null
+            ? prefabCanvas.GetComponent<RectTransform>()
+            : null;
+
+        if (cardRect == null)
+        {
+            Debug.LogError("Hand card prefab must contain a Canvas with a RectTransform.", cardPrefabForHand);
+            return;
+        }
+
+        RectTransform viewport = scrollRect != null && scrollRect.viewport != null
+            ? scrollRect.viewport
+            : content;
+
+        if (viewport.rect.width <= HandCardSpacing ||
+            cardRect.rect.width <= 0f ||
+            cardRect.rect.height <= 0f)
+        {
+            Debug.LogError("Hand viewport must fit two cards and the card prefab dimensions must be non-zero.", this);
+            return;
+        }
+
+        for (int i = content.childCount - 1; i >= 0; i--)
+        {
+            Destroy(content.GetChild(i).gameObject);
+        }
+
+        float maxCardWidth = (viewport.rect.width - HandCardSpacing) / HandCardsPerRow;
+        float scale = Mathf.Min(HandCardDisplayScale, maxCardWidth / cardRect.rect.width);
+        Vector2 displaySize = cardRect.rect.size * scale;
+        float columnStep = displaySize.x + HandCardSpacing;
+        float rowStep = displaySize.y + HandCardSpacing;
+
+        int cardCount = 0;
+        foreach (Card card in Player.GetInstance().curhand)
+        {
+            if (card != null)
+            {
+                cardCount++;
+            }
+        }
+
+        int rowCount = (cardCount + HandCardsPerRow - 1) / HandCardsPerRow;
+        float gridWidth = HandCardsPerRow * displaySize.x + (HandCardsPerRow - 1) * HandCardSpacing;
+        float contentWidth = Mathf.Max(viewport.rect.width, gridWidth);
+        float contentHeight = rowCount > 0
+            ? rowCount * displaySize.y + (rowCount - 1) * HandCardSpacing
+            : viewport.rect.height;
+
+        content.anchorMin = new Vector2(0.5f, 1f);
+        content.anchorMax = new Vector2(0.5f, 1f);
+        content.pivot = new Vector2(0.5f, 1f);
+        content.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, contentWidth);
+        content.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(viewport.rect.height, contentHeight));
+
+        int cardIndex = 0;
+        foreach (Card card in Player.GetInstance().curhand)
+        {
+            if (card == null)
+            {
+                Debug.LogWarning("Skipping a null card in the player's hand.", this);
+                continue;
+            }
+
+            cardPrefab prefab = Instantiate(cardPrefabForHand, content, false);
+            prefab.name = card.name;
+            prefab.transform.localPosition = new Vector3(
+                -(gridWidth * 0.5f) + (cardIndex % HandCardsPerRow) * columnStep + displaySize.x * 0.5f,
+                -(cardIndex / HandCardsPerRow * rowStep + displaySize.y * 0.5f),
+                0f);
+            prefab.transform.localRotation = Quaternion.identity;
+            prefab.transform.localScale = Vector3.one * scale;
+
+            prefab.setCardTo(card);
+            prefab.place = cardPrefab.placement.HAND;
+            cardIndex++;
+        }
+
+        if (scrollRect != null)
+        {
+            scrollRect.horizontalNormalizedPosition = 0f;
+            scrollRect.verticalNormalizedPosition = 1f;
+        }
+
+        Debug.Log("Updated hand UI.");
     }
     public bool hasTerrain(int x, int y)
     {
         return battleField[x,y].curTerrain != null;
+    }
+    public Unit selectAnyUnit()
+    {
+        //TODO: fill this in with a visual where the player gets to click a Unit and it returns that unit
+        return new Unit("0",0,0,0,Element.COSMIC);
     }
 }
 
