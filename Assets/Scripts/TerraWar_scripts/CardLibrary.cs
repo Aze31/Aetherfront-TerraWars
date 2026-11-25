@@ -64,7 +64,7 @@ public class CardLibrary
             new Unit("Dwarf", 2, 1, 2, Element.NATURE),
             new Unit("Grave-Burrow Lurker", 1, 2, 2, 1, Element.RUIN, Ability.DIG),
             new Unit("Ancient Ruins Dragon",5,5,3,9,Element.RUIN, Ability.FLYING),
-            new Unit("Blazehorn Charger", 2, 2, 3, 1, Element.FIRE),
+            new Unit("Blazehorn Charger", 2, 3, 4, Element.FIRE),
             new Unit("Tidebender Serpent", 1, 3, 2, 3, Element.WATER, Ability.SWIMONLY),
             new Unit("Great Green Shark",4,3,7,Element.WATER, Ability.SWIMONLY),
             new Unit("Brave Seagull",1,1,2,Element.WATER, Ability.FLYING),
@@ -86,13 +86,14 @@ public class CardLibrary
             new Terrain("Mountains",2,Element.EARTH, "Earth and Wind Units here gain +1 Defense.", 1),
             new Terrain("Ocean", 1, Element.WATER, "Water Units here gain +1 Defense.", 0, PassCondition.SWIM),
             new Terrain("Beach", 1, Element.WATER, "", 0),
+            new Terrain("Verdant Meadow", 1, Element.NATURE, "", 0),
             new Terrain("Marsh", 1, Element.WATER, "Water Units here gain +1 defense",0),
             new Terrain("Grave Ruins", 1, Element.RUIN, "Ruin Units you control take up no space here.", 0),
             new Terrain("Thunderbroken Plain", 2, Element.LIGHTNING, "Lightning and Water Units here gain Swim.",1, PassCondition.SWIM),
             new Terrain("Ancient Temple", 1, Element.RUIN, "Ruin and Nature Units next to this gain +1 Defense.", 0, Element.NATURE),
             new Terrain("Desert",2, Element.FIRE, "Fire Units here gain +1 Defense",0),
-            new Terrain("Thunderfalls",1,Element.LIGHTNING,"Lightning Units here (with RANGE0) gain RANGE1 and +1 Attack",0),
-            new Terrain("Frozen Lake",1,Element.WATER, "Water Units here that can swim cannot be attacked by Units that can't swim.",1, Element.WATER),
+            new Terrain("Thunderfalls",1, Element.LIGHTNING, "Lightning Units here (with RANGE0) gain RANGE1 and +1 Attack",0),
+            new Terrain("Frozen Lake",1, Element.WATER, "Water Units here that can swim cannot be attacked by Units that can't swim.",1, Element.WATER),
         });
         Tactics.AddRange(new Tactic[]
         {
@@ -149,6 +150,9 @@ public class CardLibrary
             case "Sudden Shield":
                 BattlefieldManager.getInstance().selectAnyUnit().DEFENSE += 2;
                 break;
+
+            default:
+                break;             
         }
     }
 

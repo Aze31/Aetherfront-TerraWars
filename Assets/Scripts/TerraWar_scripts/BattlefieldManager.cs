@@ -1,12 +1,9 @@
 using UnityEngine;
 using System;
 using static CardLibrary;
-using static Player;
 using UnityEngine.UI;
-using JetBrains.Annotations;
-using UnityEditor.Rendering.LookDev;
-using UnityEngine.InputSystem;
-using System.Collections;
+using TMPro;
+
 
 public class BattlefieldManager : MonoBehaviour
 {
@@ -30,15 +27,16 @@ public class BattlefieldManager : MonoBehaviour
     private void Start()
     {
         player = Player.GetInstance(); // to make sure we're getting the right instance of player
+        gameObject.SetActive(false);
     }
 
     //another thing that could work is if I assign an object to attach to each tile object.
     //this is probably simpler
-    public GameObject[,] fieldObject;
-    public GameObject AetherDisplay; 
+    public TextMeshProUGUI AetherDisplay; 
     //make an array of buttons to assign so this is easy
     public Button[] playerButtons;
-    public Tile[,] battleField = new Tile[5,5];
+    private const int BoardSize = 5;
+    public static Tile[,] battleField = new Tile[BoardSize + 1, BoardSize + 1]; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     [SerializeField]
     private Transform HandScrollView; // for hand visualization
     [SerializeField]
@@ -47,29 +45,38 @@ public class BattlefieldManager : MonoBehaviour
     private const float HandCardDisplayScale = 35f;
     private const float HandCardSpacing = 8f;
     private const int HandCardsPerRow = 2;
+    public bool TerrainThisTurn;
+    public enum gamePhase
+    {
+        YOUR_TURN, ENEMY_TURN, YOUR_ATTACKS, ENEMY_ATTACKS, GAME_END, ERROR
+    }
 
 
     //use this to set the current state of an empty battlefield
     public void initTiles(){
-        for(int i = 1; i < 5; i++){
-            for(int j = 1; j < 5; j++){
+        for(int i = 1; i <= BoardSize; i++){
+            for(int j = 1; j <= BoardSize; j++){
                 Tile curTile = new Tile(i,j);
                 battleField[i,j] = curTile;
             }
         }
     }
 
-    public void setUpBattlefield()
+    public void setUpBattlefield(int i)
     {
-        for(int i = 0; i < 5; i++)
+        initTiles();
+        gameObject.SetActive(true);
+        if(i == 1)
         {
-            for (int j = 1; j < 5; j++)
-            {
-                //why does this error
-                //fieldObject[i,j].GetComponent<Sprite>().SetSpriteID("path");
-                fieldObject[i,j].SetActive(true);
-            }
+            Player.GetInstance().DrawHand();
+            updateHand();
+            setAetherCount(0);
         }
+    }
+    public void setAetherCount(int c)
+    {
+        player.Aether = c;
+        AetherDisplay.text = c.ToString();
     }
 
     //checks if two tiles are adjacent to each other
@@ -153,6 +160,8 @@ public class BattlefieldManager : MonoBehaviour
             ? scrollRect.viewport
             : content;
 
+        Canvas.ForceUpdateCanvases();
+
         if (viewport.rect.width <= HandCardSpacing ||
             cardRect.rect.width <= 0f ||
             cardRect.rect.height <= 0f)
@@ -229,9 +238,13 @@ public class BattlefieldManager : MonoBehaviour
     {
         return battleField[x,y].curTerrain != null;
     }
+    public void placeTerrainAt(int x, int y, Terrain terrain)
+    {
+        battleField[x,y].curTerrain = terrain;
+    }
     public Unit selectAnyUnit()
     {
-        //TODO: fill this in with a visual where the player gets to click a Unit and it returns that unit
+        //TODO: fill this in with a visual where the player gets to click a Unit (technically a tile with unit on it) and it returns that unit
         return new Unit("0",0,0,0,Element.COSMIC);
     }
 }

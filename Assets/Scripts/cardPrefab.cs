@@ -10,6 +10,9 @@ using static CardLibrary;
 public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandler,
     IBeginDragHandler, IDragHandler, IEndDragHandler
 {
+    private const float CardSpriteBoxWidthRatio = 0.5f;
+    private const float CardSpriteBoxHeightRatio = 0.45f;
+
     //TODO: later, add size modifier for the entire card's size based on the terrain/unit size
     public enum placement
     {
@@ -23,8 +26,11 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     public Card curCard;
     public GameObject border; //to set color
     public TextMeshProUGUI AttackText, DefenseText, AetherText, SizeText, Abilitytext, nameText;
-    public GameObject aText, dText, sText, abText; // these are the objects for enabling/disableing
+    public GameObject aText, dText, sText, abText; // these are the objects for enabling/disabling
     public GameObject imageObject;
+    [SerializeField] private Sprite aquaScoutSprite;
+    [SerializeField] private Sprite beachSprite;
+    [SerializeField] private Sprite oceanSprite;
     private Boolean blank; //is the card blank? ig
     private Sprite curSprite;
     public placement place;
@@ -73,11 +79,66 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
             //abText.SetActive(true);
         }
         //get rid of the if here when you get enough sprites for all cards and are more certain
-        if(card.name == "Aqua Scout" || card.name == "Ocean" || card.name == "Beach")
+        SpriteRenderer cardImageRenderer = imageObject != null
+            ? imageObject.GetComponent<SpriteRenderer>()
+            : null;
+        Sprite cardSprite = null;
+        if (card.name == "Aqua Scout")
         {
-            imageObject.GetComponent<SpriteRenderer>().sprite = Resources.Load<Sprite>("Sprites/Beach");
+            cardSprite = aquaScoutSprite;
         }
+        else if (card.name == "Ocean")
+        {
+            cardSprite = oceanSprite;
+        }
+        else if (card.name == "Beach")
+        {
+            cardSprite = beachSprite;
+        }
+
+        if (cardImageRenderer != null)
+        {
+            if (cardSprite != null)
+            {
+                cardImageRenderer.sprite = cardSprite;
+            }
+
+            FitSpriteToCardBox(cardImageRenderer);
+        }
+
+        curSprite = cardImageRenderer != null ? cardImageRenderer.sprite : null;
     }
+
+    private void FitSpriteToCardBox(SpriteRenderer cardImageRenderer)
+    {
+        Sprite sprite = cardImageRenderer.sprite;
+        RectTransform cardBox = cardImageRenderer.transform.parent as RectTransform;
+        if (sprite == null || cardBox == null)
+        {
+            return;
+        }
+
+        Vector2 spriteSize = sprite.bounds.size;
+        Vector2 boxSize = cardBox.rect.size;
+        if (spriteSize.x <= 0f || spriteSize.y <= 0f ||
+            boxSize.x <= 0f || boxSize.y <= 0f)
+        {
+            Debug.LogError("Card sprite and image box dimensions must be non-zero.", cardImageRenderer);
+            return;
+        }
+
+        float scale = Mathf.Min(
+            boxSize.x * CardSpriteBoxWidthRatio / spriteSize.x,
+            boxSize.y * CardSpriteBoxHeightRatio / spriteSize.y);
+        Vector3 imageScale = cardImageRenderer.transform.localScale;
+        cardImageRenderer.transform.localScale = new Vector3(scale, scale, imageScale.z);
+    }
+
+    public Sprite GetCardSprite()
+    {
+        return curSprite;
+    }
+
     public void resetSize() //<------------
     {
         //check if card size is not 1 and then change its battiefield appearance
@@ -91,7 +152,7 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     {
         if ((place != placement.DISPLAY &&
              place != placement.COLLECTION &&
-             place != placement.DECK) ||
+             place != placement.HAND) ||
             pointerOverDisplayCard)
         {
             return;
@@ -120,9 +181,11 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
     public void OnBeginDrag(PointerEventData eventData)
     {
-        if (!isDraggable ||
-            collectionUIManager == null ||
-            (place != placement.COLLECTION && place != placement.DECK))
+        bool isHandCard = place == placement.HAND;
+        bool isCollectionCard = isDraggable &&
+            collectionUIManager != null &&
+            (place == placement.COLLECTION || place == placement.DECK);
+        if (!isHandCard && !isCollectionCard)
         {
             return;
         }
@@ -160,6 +223,11 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         transform.SetParent(dragLayer, true);
         transform.SetAsLastSibling();
         isDragging = true;
+        Player player = Player.GetInstance();
+        if (player != null)
+        {
+            player.currentlyDragging = this;
+        }
     }
 
     public void OnDrag(PointerEventData eventData)
@@ -167,6 +235,12 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         if (!isDragging)
         {
             return;
+        }
+
+        Player player = Player.GetInstance();
+        if (player != null)
+        {
+            player.currentlyDragging = this;
         }
 
         if (RectTransformUtility.ScreenPointToWorldPointInRectangle(
@@ -187,12 +261,47 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         }
 
         isDragging = false;
-        if (collectionUIManager.TryTransferCard(curCard, place, eventData.position))
+        if (place == placement.HAND)
         {
+            if (!TilePrefab.TryPlaceCardAtScreenPosition(
+                eventData.position,
+                dragCanvas.worldCamera,
+                this))
+            {
+                RestoreAfterFailedDrag();
+                return;
+            }
+
+            Player placingPlayer = Player.GetInstance();
+            if (placingPlayer != null)
+            {
+                placingPlayer.curhand.Remove(curCard);
+                placingPlayer.currentlyDragging = null;
+            }
+
+            place = placement.BATTLE;
+            gameObject.SetActive(false);
+            return;
+        }
+
+        if (collectionUIManager != null &&
+            collectionUIManager.TryTransferCard(curCard, place, eventData.position))
+        {
+            Player transferPlayer = Player.GetInstance();
+            if (transferPlayer != null)
+            {
+                transferPlayer.currentlyDragging = null;
+            }
+
             Destroy(gameObject);
             return;
         }
 
+        RestoreAfterFailedDrag();
+    }
+
+    private void RestoreAfterFailedDrag()
+    {
         transform.SetParent(originalParent, false);
         transform.localPosition = originalLocalPosition;
         transform.localRotation = originalLocalRotation;
@@ -203,6 +312,16 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         {
             Destroy(dragCanvasGroup);
         }
+        Player player = Player.GetInstance();
+        if (player != null)
+        {
+            player.currentlyDragging = null;
+        }
+    }
+
+    public Card getCard()
+    {
+        return curCard;
     }
 
 }

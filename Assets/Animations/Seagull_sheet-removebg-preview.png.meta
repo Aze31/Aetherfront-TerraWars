@@ -1,0 +1,379 @@
+fileFormatVersion: 2
+guid: de8cfda62f4234745b72e39335008896
+TextureImporter:
+  internalIDToNameTable:
+  - first:
+      213: -14909817458658939
+    second: Seagull_sheet-removebg-preview_0
+  - first:
+      213: -4645014903221226325
+    second: Seagull_sheet-removebg-preview_1
+  - first:
+      213: 9164828472218914570
+    second: Seagull_sheet-removebg-preview_2
+  - first:
+      213: -8772390463924346177
+    second: Seagull_sheet-removebg-preview_3
+  - first:
+      213: -5785422551581175710
+    second: Seagull_sheet-removebg-preview_4
+  - first:
+      213: 3101813827151019213
+    second: Seagull_sheet-removebg-preview_5
+  - first:
+      213: -3944609006600308483
+    second: Seagull_sheet-removebg-preview_6
+  - first:
+      213: -8327929790643913398
+    second: Seagull_sheet-removebg-preview_7
+  - first:
+      213: -6366718797657052799
+    second: Seagull_sheet-removebg-preview_8
+  - first:
+      213: 4922960704126360420
+    second: Seagull_sheet-removebg-preview_9
+  externalObjects: {}
+  serializedVersion: 13
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    sRGBTexture: 1
+    linearTexture: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapsPreserveCoverage: 0
+    alphaTestReferenceValue: 0.5
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: 0.25
+    normalMapFilter: 0
+    flipGreenChannel: 0
+  isReadable: 0
+  streamingMipmaps: 0
+  streamingMipmapsPriority: 0
+  vTOnly: 0
+  ignoreMipmapLimit: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 6
+  cubemapConvolution: 0
+  seamlessCubemap: 0
+  textureFormat: 1
+  maxTextureSize: 2048
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 1
+    aniso: 1
+    mipBias: 0
+    wrapU: 1
+    wrapV: 1
+    wrapW: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: 0.5, y: 0.5}
+  spritePixelsToUnits: 100
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spriteGenerateFallbackPhysicsShape: 1
+  alphaUsage: 1
+  alphaIsTransparency: 1
+  spriteTessellationDetail: -1
+  textureType: 8
+  textureShape: 1
+  singleChannelComponent: 0
+  flipbookRows: 1
+  flipbookColumns: 1
+  maxTextureSizeSet: 0
+  compressionQualitySet: 0
+  textureFormatSet: 0
+  ignorePngGamma: 0
+  applyGammaDecoding: 0
+  swizzle: 50462976
+  cookieLightType: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: Standalone
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
+  spriteSheet:
+    serializedVersion: 2
+    sprites:
+    - serializedVersion: 2
+      name: Seagull_sheet-removebg-preview_0
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 235
+        width: 123
+        height: 89
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 581f5ba99970bcff0800000000000000
+      internalID: -14909817458658939
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Seagull_sheet-removebg-preview_1
+      rect:
+        serializedVersion: 2
+        x: 142
+        y: 234
+        width: 108
+        height: 113
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: ba47a1d4e87998fb0800000000000000
+      internalID: -4645014903221226325
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Seagull_sheet-removebg-preview_2
+      rect:
+        serializedVersion: 2
+        x: 247
+        y: 232
+        width: 110
+        height: 126
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a0f8ef920f2003f70800000000000000
+      internalID: 9164828472218914570
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Seagull_sheet-removebg-preview_3
+      rect:
+        serializedVersion: 2
+        x: 362
+        y: 234
+        width: 113
+        height: 104
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: fb2e3c6e955324680800000000000000
+      internalID: -8772390463924346177
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Seagull_sheet-removebg-preview_4
+      rect:
+        serializedVersion: 2
+        x: 468
+        y: 235
+        width: 136
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 260587187dc06bfa0800000000000000
+      internalID: -5785422551581175710
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Seagull_sheet-removebg-preview_5
+      rect:
+        serializedVersion: 2
+        x: 9
+        y: 61
+        width: 136
+        height: 85
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: dcc3bbedd3bdb0b20800000000000000
+      internalID: 3101813827151019213
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Seagull_sheet-removebg-preview_6
+      rect:
+        serializedVersion: 2
+        x: 137
+        y: 59
+        width: 113
+        height: 104
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: df838c7020fe149c0800000000000000
+      internalID: -3944609006600308483
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Seagull_sheet-removebg-preview_7
+      rect:
+        serializedVersion: 2
+        x: 255
+        y: 56
+        width: 111
+        height: 129
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: a4db64a8aff3d6c80800000000000000
+      internalID: -8327929790643913398
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Seagull_sheet-removebg-preview_8
+      rect:
+        serializedVersion: 2
+        x: 363
+        y: 58
+        width: 107
+        height: 113
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 18969d06cfed4a7a0800000000000000
+      internalID: -6366718797657052799
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    - serializedVersion: 2
+      name: Seagull_sheet-removebg-preview_9
+      rect:
+        serializedVersion: 2
+        x: 474
+        y: 61
+        width: 123
+        height: 87
+      alignment: 0
+      pivot: {x: 0.5, y: 0.5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+      customData: 
+      outline: []
+      physicsShape: []
+      tessellationDetail: -1
+      bones: []
+      spriteID: 46b98ac6daed15440800000000000000
+      internalID: 4922960704126360420
+      vertices: []
+      indices: 
+      edges: []
+      weights: []
+    outline: []
+    customData: 
+    physicsShape: []
+    bones: []
+    spriteID: 25714a1164bf9a64eab6865015530091
+    internalID: 0
+    vertices: []
+    indices: 
+    edges: []
+    weights: []
+    secondaryTextures: []
+    spriteCustomMetadata:
+      entries:
+      - key: SpriteEditor.SliceSettings
+        value: '{"sliceOnImport":false,"gridCellCount":{"x":5.0,"y":2.0},"gridSpriteSize":{"x":64.0,"y":64.0},"gridSpriteOffset":{"x":0.0,"y":0.0},"gridSpritePadding":{"x":0.0,"y":0.0},"pivot":{"x":0.5,"y":0.5},"pivotPixels":{"x":0.0,"y":0.0},"autoSlicingMethod":0,"spriteAlignment":0,"pivotUnitMode":0,"slicingType":0,"keepEmptyRects":false,"isAlternate":false}'
+    nameFileIdTable:
+      Seagull_sheet-removebg-preview_0: -14909817458658939
+      Seagull_sheet-removebg-preview_1: -4645014903221226325
+      Seagull_sheet-removebg-preview_2: 9164828472218914570
+      Seagull_sheet-removebg-preview_3: -8772390463924346177
+      Seagull_sheet-removebg-preview_4: -5785422551581175710
+      Seagull_sheet-removebg-preview_5: 3101813827151019213
+      Seagull_sheet-removebg-preview_6: -3944609006600308483
+      Seagull_sheet-removebg-preview_7: -8327929790643913398
+      Seagull_sheet-removebg-preview_8: -6366718797657052799
+      Seagull_sheet-removebg-preview_9: 4922960704126360420
+  mipmapLimitGroupName: 
+  pSDRemoveMatte: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 

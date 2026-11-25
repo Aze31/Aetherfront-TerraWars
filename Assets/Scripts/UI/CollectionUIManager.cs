@@ -6,7 +6,7 @@ public class CollectionUIManager : MonoBehaviour
 {
     private const float CardDisplayScale = 35f;
     private const float CardSpacing = 8f;
-    private const int CardsPerRow = 2;
+    private const int CardsPerRow = 2; // consider changing this number to 3
 
     [SerializeField]
     private ScrollRect deckScrollView;
@@ -203,8 +203,8 @@ public class CollectionUIManager : MonoBehaviour
 
             cardObject.transform.localPosition = new Vector3(
                 (contentWidth - gridWidth) * 0.5f +
-                    (cardIndex % CardsPerRow) * columnStep +
-                    displaySize.x * 0.5f +
+                    (cardIndex % CardsPerRow) * columnStep -
+                    displaySize.x * 0.7f +
                     hDisplacement,
                 -(cardIndex / CardsPerRow * rowStep + displaySize.y * 0.5f),
                 0f);

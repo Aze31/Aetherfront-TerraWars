@@ -1171,4 +1171,7 @@ MonoBehaviour:
   sText: {fileID: 6846831802363611239}
   abText: {fileID: 440619552338012059}
   imageObject: {fileID: 3430932802386646805}
+  aquaScoutSprite: {fileID: 3841003566487248638, guid: eced6dee4074fe94bb82c73421aabaf2, type: 3}
+  beachSprite: {fileID: 21300000, guid: 483b80e6a60a48f4fa230a10a232a8f7, type: 3}
+  oceanSprite: {fileID: -2923631271834578888, guid: a9995db3bbaf36549baada7554d024f3, type: 3}
   place: 0

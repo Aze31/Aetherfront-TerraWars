@@ -32,6 +32,7 @@ public class Player : MonoBehaviour
     public double Health = 50; //dead if below zero
     public double Aether;
     private CardLibrary lib = CardLibrary.getInstance();
+    public cardPrefab currentlyDragging = null;
 
     //for battle
     public List<Card> curhand = new List<Card>();
@@ -103,8 +104,11 @@ public class Player : MonoBehaviour
     }
     public void createStartingCollection()
     {
-        addToCollection(lib.getUnitByName("Grove Sentinel"),3);
-        addToCollection(lib.getUnitByName("Dwarf"),3);
+        //in the player's collection but not inside their starting deck
+        addToCollection(lib.getUnitByName("Grove Sentinel"), 3);
+        addToCollection(lib.getUnitByName("Dwarf"), 3);
+        addToCollection(lib.getTerrainByName("Verdant Meadow"), 4);
+
     }
 
     //now for gameplay decision methods
