@@ -90,6 +90,7 @@ public class Terrain : Card
     public Element type;
     public PassCondition condition;
     public Element overlayType;
+    public bool hasOverlayType;
     //use this constructor if anyone can pass the terrain
     public Terrain(string name, int size, Element type, string effect, int cost)
     {
@@ -119,6 +120,7 @@ public class Terrain : Card
         this.effect = effect;
         this.cost = cost;
         this.overlayType = overlayType;
+        hasOverlayType = true;
         condition = PassCondition.NONE;
     }
     //for both:
@@ -131,5 +133,6 @@ public class Terrain : Card
         this.cost = cost;
         condition = pass;
         this.overlayType = overlayType;
+        hasOverlayType = true;
     }
 }

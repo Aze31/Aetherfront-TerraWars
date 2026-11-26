@@ -4,6 +4,7 @@ using UnityEngine;
 public class CollisionObserver : MonoBehaviour
 {
     //this observer checks for all collisions involving the player and does things accordingly
+    
     [SerializeField]
     public GameObject player;
     public static event Action<GameObject, GameObject> OnObjectCollision;
@@ -13,7 +14,7 @@ public class CollisionObserver : MonoBehaviour
         Debug.Log("Collision entered with "  + collision.gameObject.name);
     }
 
-    private void NotifyCollision(GameObject o1, GameObject o2)
+    /*private void NotifyCollision(GameObject o1, GameObject o2)
     {
         if(o1 == player || o2 == player) // to keep it cleaner, all collisions involving the olayer are organized here 
         {
@@ -27,8 +28,7 @@ public class CollisionObserver : MonoBehaviour
             }
             if (o1.name.Contains("Enemy") || o2.name.Contains("Enemy"))
             {
-                //
             }
         }
-    }
+    }*/
 }

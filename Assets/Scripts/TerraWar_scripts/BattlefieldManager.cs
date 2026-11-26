@@ -3,6 +3,7 @@ using System;
 using static CardLibrary;
 using UnityEngine.UI;
 using TMPro;
+using UnityEngine.EventSystems;
 
 
 public class BattlefieldManager : MonoBehaviour
@@ -30,11 +31,21 @@ public class BattlefieldManager : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    private void Update()
+    {
+        //i'll use this update to set the battle state situation based on phase
+        if(currentPhase == gamePhase.ENEMY_TURN || currentPhase == gamePhase.ENEMY_ATTACKS)
+        {
+            TerrainThisTurn = true;
+        }
+    }
+
     //another thing that could work is if I assign an object to attach to each tile object.
     //this is probably simpler
     public TextMeshProUGUI AetherDisplay; 
     //make an array of buttons to assign so this is easy
-    public Button[] playerButtons;
+    public Button passTurnButton;
+    public Button passPhaseButton;
     private const int BoardSize = 5;
     public static Tile[,] battleField = new Tile[BoardSize + 1, BoardSize + 1]; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     [SerializeField]
@@ -45,12 +56,12 @@ public class BattlefieldManager : MonoBehaviour
     private const float HandCardDisplayScale = 35f;
     private const float HandCardSpacing = 8f;
     private const int HandCardsPerRow = 2;
-    public bool TerrainThisTurn;
+    public bool TerrainThisTurn; // basically the negation of whether you can place a terrain right now
     public enum gamePhase
     {
-        YOUR_TURN, ENEMY_TURN, YOUR_ATTACKS, ENEMY_ATTACKS, GAME_END, ERROR
+        YOUR_TURN, ENEMY_TURN, YOUR_ATTACKS, ENEMY_ATTACKS, GAME_END, ERROR, OUT_OF_GAME
     }
-
+    public gamePhase currentPhase;
 
     //use this to set the current state of an empty battlefield
     public void initTiles(){
@@ -225,13 +236,11 @@ public class BattlefieldManager : MonoBehaviour
             prefab.place = cardPrefab.placement.HAND;
             cardIndex++;
         }
-
         if (scrollRect != null)
         {
             scrollRect.horizontalNormalizedPosition = 0f;
             scrollRect.verticalNormalizedPosition = 1f;
         }
-
         Debug.Log("Updated hand UI.");
     }
     public bool hasTerrain(int x, int y)
