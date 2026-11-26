@@ -7,7 +7,7 @@ public class goblinFOV : MonoBehaviour
     [SerializeField] private GameObject goblin;
     [SerializeField] private NarrativeText narrativeText;
     [SerializeField] private float x = 5f;
-    [SerializeField] private string narrative = "Goblin: 'What are you doing on my turf?'";
+    private string narrative = "Goblin: 'What are you doing on my turf?'";
 
     private bool hasTriggered;
 

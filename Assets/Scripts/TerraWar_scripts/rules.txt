@@ -3,9 +3,7 @@ THIS FILE GIVES AN IN-DEPTH EXPLANATION OF HOW THE CARD GAME FUNCTIONS.*
 
 --Aether--
 The unit of elemental energy, known as Aether, is used to call Units and put Tactics in motion. 
-There are two sources of Aether in a game:
-    1. Each player gains +1 Aether at the beginning of their turn. This happenes before that player draws.
-    2. Terrains each give the user +1 Aether at the start of the turn, but this amount can be modified by the Terrain's own effects.
+Terrains each give the user +1 Aether at the start of the turn, but this amount can be modified by the Terrain's own effects.
 
 Aether can be used to pay the call cost of Units, and the cost of Tactics. Each turn, you can activate as many Tactics, and
 call as many units as your Aether allows you to. You may only place one Terrain per turn, and Units can only be placed if there is 
@@ -14,8 +12,9 @@ or a size of 0.
 Aether is never lost to state-based actions or turn passes. You can save your Aether between turns if you do not use it.
 
 --Terrains--
-Terrains have an elemental affinity, as well as special bonuses when Units with a matching element are placed on them.
-The playing board is a 5x5 grid on which Terrains take up space. If there is not enough space on the board available, 
+Terrains have an elemental affinity, as well as special bonuses when Units with a matching element are placed on them (sometimes).
+Terrains most often have an Aether cost of 0, but this is not always the case.
+The playing board is a 5x5 grid on which Terrains take up space. If there is not enough space on the board available to you, 
 then you cannot place Terrains.
 Some terrains are difficult for certain Units to 'cross'. For instance, Units with flying can cross any Terrain,
 but Units that need land to walk on cannot cross Ocean terrains. A Unit can only be placed on a Terrain that it can cross.

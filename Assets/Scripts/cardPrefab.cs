@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using TMPro;
 using Unity.VisualScripting;
 using UnityEngine;
@@ -26,13 +27,14 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     public Card curCard;
     public GameObject border; //to set color
     public TextMeshProUGUI AttackText, DefenseText, AetherText, SizeText, Abilitytext, nameText;
+    public TextMeshProUGUI unitAbilityText;
     public GameObject aText, dText, sText, abText; // these are the objects for enabling/disabling
     public GameObject imageObject;
-    [SerializeField] private Sprite aquaScoutSprite;
-    [SerializeField] private Sprite beachSprite;
-    [SerializeField] private Sprite oceanSprite;
+
     private Boolean blank; //is the card blank? ig
     private Sprite curSprite;
+    private Sprite defaultCardSprite;
+    private static Dictionary<string, Sprite> spritesByName;
     public placement place;
     public bool isDraggable;
     private CollectionUIManager collectionUIManager;
@@ -60,10 +62,20 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
             AttackText.text = unit.ATTACK.ToString();
             DefenseText.text = unit.DEFENSE.ToString();
             SizeText.text = unit.size.ToString();
-            abText.SetActive(false);
+            bool hasAbility = unitAbilityText != null && unit.ability != Ability.NONE;
+            abText.SetActive(hasAbility);
+            if (unitAbilityText != null)
+            {
+                unitAbilityText.text = hasAbility ? unit.ability.ToString() : string.Empty;
+                unitAbilityText.gameObject.SetActive(hasAbility);
+            }
         }
         if(card is Terrain terrain)
         {
+            if (unitAbilityText != null)
+            {
+                unitAbilityText.gameObject.SetActive(false);
+            }
             SizeText.text = terrain.size.ToString();
             // abText.SetActive(true);
             aText.SetActive(false);
@@ -72,37 +84,23 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         }
         if(card is Tactic tactic)
         { //record the first ability for now, fix later
+            if (unitAbilityText != null)
+            {
+                unitAbilityText.gameObject.SetActive(false);
+            }
             Abilitytext.text = tactic.abilities[0];
             aText.SetActive(false);
             dText.SetActive(false);
             sText.SetActive(false);
             //abText.SetActive(true);
         }
-        //get rid of the if here when you get enough sprites for all cards and are more certain
         SpriteRenderer cardImageRenderer = imageObject != null
             ? imageObject.GetComponent<SpriteRenderer>()
             : null;
-        Sprite cardSprite = null;
-        if (card.name == "Aqua Scout")
-        {
-            cardSprite = aquaScoutSprite;
-        }
-        else if (card.name == "Ocean")
-        {
-            cardSprite = oceanSprite;
-        }
-        else if (card.name == "Beach")
-        {
-            cardSprite = beachSprite;
-        }
-
         if (cardImageRenderer != null)
         {
-            if (cardSprite != null)
-            {
-                cardImageRenderer.sprite = cardSprite;
-            }
-
+            Sprite cardSprite = FindSpriteByName(card.name);
+            cardImageRenderer.sprite = cardSprite != null ? cardSprite : defaultCardSprite;
             FitSpriteToCardBox(cardImageRenderer);
         }
 
@@ -141,11 +139,48 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
 
     public void resetSize() //<------------
     {
-        //check if card size is not 1 and then change its battiefield appearance
+        if ((curCard is Unit unit && unit.size !=1) || (curCard is Terrain terrain &&terrain.size != 1))
+        {
+            //check if card size is not 1 and then change its battiefield appearance
+        }
     }
+    
     void Start()
     {
         originalScale = transform.localScale;
+    }
+
+    private void Awake()
+    {
+        SpriteRenderer cardImageRenderer = imageObject != null
+            ? imageObject.GetComponent<SpriteRenderer>()
+            : null;
+        defaultCardSprite = cardImageRenderer != null ? cardImageRenderer.sprite : null;
+    }
+
+    private static Sprite FindSpriteByName(string spriteName)
+    {
+        if (spritesByName == null)
+        {
+            spritesByName = new Dictionary<string, Sprite>();
+            foreach (Sprite sprite in Resources.LoadAll<Sprite>("Sprites"))
+            {
+                if (sprite == null)
+                {
+                    continue;
+                }
+
+                string spriteKey = sprite.texture != null ? sprite.texture.name : sprite.name;
+                if (!spritesByName.ContainsKey(spriteKey) || sprite.name == spriteKey)
+                {
+                    spritesByName[spriteKey] = sprite;
+                }
+            }
+        }
+
+        return spritesByName.TryGetValue(spriteName, out Sprite matchingSprite)
+            ? matchingSprite
+            : null;
     }
 
     public void OnPointerEnter(PointerEventData eventData)
@@ -182,6 +217,16 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
     public void OnBeginDrag(PointerEventData eventData)
     {
         bool isHandCard = place == placement.HAND;
+        if (isHandCard)
+        {
+            BattlefieldManager manager = BattlefieldManager.getInstance();
+            if (manager == null ||
+                manager.currentPhase != BattlefieldManager.gamePhase.YOUR_TURN)
+            {
+                return;
+            }
+        }
+
         bool isCollectionCard = isDraggable &&
             collectionUIManager != null &&
             (place == placement.COLLECTION || place == placement.DECK);
@@ -203,6 +248,12 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         {
             Debug.LogError("The card's root Canvas must have a RectTransform.", dragCanvas);
             return;
+        }
+
+        if (pointerOverDisplayCard)
+        {
+            transform.localScale = originalScale;
+            pointerOverDisplayCard = false;
         }
 
         originalParent = transform.parent;
@@ -263,6 +314,11 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         isDragging = false;
         if (place == placement.HAND)
         {
+            if (TryPlayTacticAtScreenPosition(eventData.position))
+            {
+                return;
+            }
+
             if (!TilePrefab.TryPlaceCardAtScreenPosition(
                 eventData.position,
                 dragCanvas.worldCamera,
@@ -298,6 +354,31 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         }
 
         RestoreAfterFailedDrag();
+    }
+
+    private bool TryPlayTacticAtScreenPosition(Vector2 screenPosition)
+    {
+        if (!(curCard is Tactic tactic))
+        {
+            return false;
+        }
+
+        BattlefieldManager manager = BattlefieldManager.getInstance();
+        Player player = Player.GetInstance();
+        if (manager == null ||
+            player == null ||
+            !manager.IsPointerOverTacticZone(screenPosition) ||
+            !player.payAether(tactic.cost))
+        {
+            return false;
+        }
+
+        CardLibrary.getInstance().resolveTacticByName(tactic.name);
+        manager.updateAetherDisplay();
+        player.curhand.Remove(curCard);
+        player.currentlyDragging = null;
+        Destroy(gameObject);
+        return true;
     }
 
     private void RestoreAfterFailedDrag()

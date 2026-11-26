@@ -3,6 +3,8 @@ using static CardLibrary;
 
 public class TilePrefab : MonoBehaviour
 {
+    private const float UnitSpriteTileScale = 0.8f;
+
     //bottom left is 1,1 and top right is 5,5
     public int x;
     public int y;
@@ -11,11 +13,20 @@ public class TilePrefab : MonoBehaviour
     public GameObject tileSquare;
     private BattlefieldManager manager;
     private bool isMouseOver;
-    private SpriteRenderer unitSpriteRenderer;
+    private SpriteRenderer groundUnitSpriteRenderer;
+    private SpriteRenderer flyingUnitSpriteRenderer;
+    private Unit highlightedUnit;
+    private SpriteRenderer highlightedUnitRenderer;
+    private Color highlightedOriginalColor;
+    private Vector3 highlightedOriginalScale;
 
     private void Start()
     {
         manager = BattlefieldManager.getInstance();
+        if (manager != null)
+        {
+            manager.RegisterTilePrefab(this);
+        }
     }
 
     private void OnMouseEnter()
@@ -26,6 +37,20 @@ public class TilePrefab : MonoBehaviour
     private void OnMouseExit()
     {
         isMouseOver = false;
+    }
+
+    private void OnMouseDown()
+    {
+        if (manager == null)
+        {
+            manager = BattlefieldManager.getInstance();
+        }
+
+        if (manager != null)
+        {
+            manager.HandleTileClicked(this);
+        }
+        Debug.LogWarning("Tile (" + this.x + ", " + this.y + ") was pressed! IT WORKED", this);
     }
 
     private bool nextToTerrain()
@@ -57,10 +82,19 @@ public class TilePrefab : MonoBehaviour
     public bool CanAcceptCard(Card card)
     {
         Tile[,] battlefield = BattlefieldManager.battleField;
+        Player player = Player.GetInstance();
         if (manager == null ||
+            player == null ||
             card == null ||
+            player.Aether < card.cost ||
+            manager.currentPhase != BattlefieldManager.gamePhase.YOUR_TURN ||
             x < 1 || x >= battlefield.GetLength(0) ||
             y < 1 || y >= battlefield.GetLength(1))
+        {
+            return false;
+        }
+
+        if (card is Terrain && manager.TerrainThisTurn)
         {
             return false;
         }
@@ -78,9 +112,7 @@ public class TilePrefab : MonoBehaviour
 
         if (card is Unit unit)
         {
-            return tile.curTerrain != null &&
-                (unit.ability == Ability.FLYING || unit.size <= tile.curTerrain.size) &&
-                tile.canCross(unit.ability);
+            return tile.playerControlsTerrain && tile.canHoldUnit(unit);
         }
 
         return false;
@@ -94,59 +126,95 @@ public class TilePrefab : MonoBehaviour
         }
 
         Sprite cardSprite = cardView.GetCardSprite();
-        SpriteRenderer tileSpriteRenderer = sprite != null
-            ? sprite.GetComponent<SpriteRenderer>()
-            : null;
         if (cardSprite == null)
         {
             Debug.LogError("Cannot place a card whose image has no sprite.", cardView);
             return false;
         }
 
-        if (tileSpriteRenderer == null)
-        {
-            Debug.LogError("TilePrefab requires a SpriteRenderer on its sprite object.", this);
-            return false;
-        }
-
-        SpriteRenderer targetSpriteRenderer = tileSpriteRenderer;
-        if (cardView.getCard() is Unit)
-        {
-            targetSpriteRenderer = GetUnitSpriteRenderer(tileSpriteRenderer);
-        }
-
-        if (!FitSpriteToTile(targetSpriteRenderer, cardSprite))
+        if (!TryPrepareCardSprite(cardView.getCard(), cardSprite, out SpriteRenderer targetSpriteRenderer))
         {
             return false;
         }
+
+        Player player = Player.GetInstance();
+        if (player == null || !player.payAether(cardView.getCard().cost))
+        {
+            return false;
+        }
+        manager.updateAetherDisplay();
 
         //stupid don't force properties onto a local copy of tile set it via manager so it actually matters
-        Tile tile = BattlefieldManager.battleField[x, y];
         if (cardView.getCard() is Terrain terrain)
         {
-            //tile.curTerrain = terrain;
             manager.placeTerrainAt(this.x, this.y, terrain);
+            manager.TerrainThisTurn = true;
         }
-        else if (cardView.getCard() is Unit unit)
+        else if (cardView.getCard() is Unit placedUnit)
         {
-            //tile.putUnitHere(unit);
-            manager.placeUnitAt(this.x, this.y, unit);
-            if (unit.ability == Ability.FLYING)
-            {
-                tile.skyOccupied = true;
-            }
-            else
-            {
-                tile.groundOccupied = true;
-            }
+            manager.placeUnitAt(this.x, this.y, placedUnit);
         }
 
         targetSpriteRenderer.sprite = cardSprite;
         return true;
     }
 
-    private SpriteRenderer GetUnitSpriteRenderer(SpriteRenderer terrainSpriteRenderer)
+    public bool TrySetCardSprite(Card card, Sprite cardSprite)
     {
+        if (!TryPrepareCardSprite(card, cardSprite, out SpriteRenderer targetSpriteRenderer))
+        {
+            return false;
+        }
+
+        targetSpriteRenderer.sprite = cardSprite;
+        return true;
+    }
+
+    private bool TryPrepareCardSprite(
+        Card card,
+        Sprite cardSprite,
+        out SpriteRenderer targetSpriteRenderer)
+    {
+        targetSpriteRenderer = null;
+        if (card == null || cardSprite == null)
+        {
+            Debug.LogError("Cannot display a null card or sprite on a tile.", this);
+            return false;
+        }
+
+        SpriteRenderer tileSpriteRenderer = sprite != null
+            ? sprite.GetComponent<SpriteRenderer>()
+            : null;
+        if (tileSpriteRenderer == null)
+        {
+            Debug.LogError("TilePrefab requires a SpriteRenderer on its sprite object.", this);
+            return false;
+        }
+
+        targetSpriteRenderer = tileSpriteRenderer;
+        if (card is Unit unitCard)
+        {
+            targetSpriteRenderer = GetUnitSpriteRenderer(
+                tileSpriteRenderer,
+                unitCard.ability == Ability.FLYING);
+        }
+        else if (!(card is Terrain))
+        {
+            Debug.LogError("Only unit and terrain cards can be displayed on a tile.", this);
+            return false;
+        }
+
+        float sizeScale = card is Unit ? UnitSpriteTileScale : 1f;
+        return FitSpriteToTile(targetSpriteRenderer, cardSprite, sizeScale);
+    }
+
+    private SpriteRenderer GetUnitSpriteRenderer(
+        SpriteRenderer terrainSpriteRenderer,
+        bool isFlying)
+    {
+        SpriteRenderer unitSpriteRenderer = isFlying
+            ? flyingUnitSpriteRenderer
+            : groundUnitSpriteRenderer;
         if (unitSpriteRenderer != null)
         {
             return unitSpriteRenderer;
@@ -163,11 +231,146 @@ public class TilePrefab : MonoBehaviour
         unitSpriteRenderer = unitSpriteObject.GetComponent<SpriteRenderer>();
         unitSpriteRenderer.sharedMaterial = terrainSpriteRenderer.sharedMaterial;
         unitSpriteRenderer.sortingLayerID = terrainSpriteRenderer.sortingLayerID;
-        unitSpriteRenderer.sortingOrder = terrainSpriteRenderer.sortingOrder + 1;
+        unitSpriteRenderer.sortingOrder = terrainSpriteRenderer.sortingOrder + (isFlying ? 2 : 1);
+        if (isFlying)
+        {
+            flyingUnitSpriteRenderer = unitSpriteRenderer;
+        }
+        else
+        {
+            groundUnitSpriteRenderer = unitSpriteRenderer;
+        }
+
         return unitSpriteRenderer;
     }
 
-    private bool FitSpriteToTile(SpriteRenderer spriteRenderer, Sprite cardSprite)
+    public bool SetUnitSelected(Unit unit, bool selected)
+    {
+        if (!selected)
+        {
+            if (highlightedUnit != unit)
+            {
+                return true;
+            }
+
+            RestoreUnitHighlight();
+            return true;
+        }
+
+        SpriteRenderer unitRenderer = GetUnitSpriteRenderer(unit);
+        if (unitRenderer == null || unitRenderer.sprite == null)
+        {
+            Debug.LogError("Cannot highlight a unit without its tile sprite.", this);
+            return false;
+        }
+
+        if (highlightedUnit == unit && highlightedUnitRenderer == unitRenderer)
+        {
+            return true;
+        }
+
+        RestoreUnitHighlight();
+        highlightedUnit = unit;
+        highlightedUnitRenderer = unitRenderer;
+        highlightedOriginalColor = unitRenderer.color;
+        highlightedOriginalScale = unitRenderer.transform.localScale;
+        Color selectionTint = new Color(1f, 0.96f, 0.62f, highlightedOriginalColor.a);
+        unitRenderer.color = Color.Lerp(highlightedOriginalColor, selectionTint, 0.5f);
+        unitRenderer.transform.localScale = new Vector3(
+            highlightedOriginalScale.x * 1.05f,
+            highlightedOriginalScale.y * 1.05f,
+            highlightedOriginalScale.z);
+        return true;
+    }
+
+    public void ClearUnitSprite(Unit unit)
+    {
+        if (unit == null)
+        {
+            return;
+        }
+
+        if (highlightedUnit == unit)
+        {
+            RestoreUnitHighlight();
+        }
+
+        SpriteRenderer unitRenderer = GetUnitSpriteRenderer(unit);
+        if (unitRenderer != null)
+        {
+            unitRenderer.sprite = null;
+        }
+    }
+
+    private SpriteRenderer GetUnitSpriteRenderer(Unit unit)
+    {
+        if (unit == null)
+        {
+            return null;
+        }
+
+        return unit.ability == Ability.FLYING
+            ? flyingUnitSpriteRenderer
+            : groundUnitSpriteRenderer;
+    }
+
+    private void RestoreUnitHighlight()
+    {
+        if (highlightedUnitRenderer != null)
+        {
+            highlightedUnitRenderer.color = highlightedOriginalColor;
+            highlightedUnitRenderer.transform.localScale = highlightedOriginalScale;
+        }
+
+        highlightedUnit = null;
+        highlightedUnitRenderer = null;
+    }
+
+    public bool TryMoveUnitSpriteTo(TilePrefab destination, Unit unit)
+    {
+        if (destination == null || unit == null)
+        {
+            return false;
+        }
+
+        bool isFlying = unit.ability == Ability.FLYING;
+        SpriteRenderer sourceRenderer = isFlying
+            ? flyingUnitSpriteRenderer
+            : groundUnitSpriteRenderer;
+        SpriteRenderer destinationTerrainRenderer = destination.sprite != null
+            ? destination.sprite.GetComponent<SpriteRenderer>()
+            : null;
+        if (sourceRenderer == null || sourceRenderer.sprite == null)
+        {
+            Debug.LogError("Cannot move a unit without its source sprite.", this);
+            return false;
+        }
+
+        if (destinationTerrainRenderer == null)
+        {
+            Debug.LogError("Destination TilePrefab requires a SpriteRenderer on its sprite object.", destination);
+            return false;
+        }
+
+        SpriteRenderer destinationRenderer = destination.GetUnitSpriteRenderer(
+            destinationTerrainRenderer,
+            isFlying);
+        Sprite unitSprite = sourceRenderer.sprite;
+        if (!destination.FitSpriteToTile(
+                destinationRenderer,
+                unitSprite,
+                UnitSpriteTileScale))
+        {
+            return false;
+        }
+
+        destinationRenderer.sprite = unitSprite;
+        destinationRenderer.color = sourceRenderer.color;
+        sourceRenderer.sprite = null;
+        return true;
+    }
+
+    private bool FitSpriteToTile(SpriteRenderer spriteRenderer, Sprite cardSprite, float sizeScale)
     {
         RectTransform tileBox = tileSquare != null
             ? tileSquare.GetComponent<RectTransform>()
@@ -187,7 +390,7 @@ public class TilePrefab : MonoBehaviour
             return false;
         }
 
-        float scale = Mathf.Min(boxSize.x / spriteSize.x, boxSize.y / spriteSize.y);
+        float scale = Mathf.Min(boxSize.x / spriteSize.x, boxSize.y / spriteSize.y) * sizeScale;
         Vector3 imageScale = spriteRenderer.transform.localScale;
         spriteRenderer.transform.localScale = new Vector3(scale, scale, imageScale.z);
         return true;

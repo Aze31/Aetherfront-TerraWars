@@ -17,7 +17,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!224 &2623181420287555671
 RectTransform:
   m_ObjectHideFlags: 0
@@ -74,8 +74,8 @@ MonoBehaviour:
   m_fontMaterials: []
   m_fontColor32:
     serializedVersion: 2
-    rgba: 4294967295
-  m_fontColor: {r: 1, g: 1, b: 1, a: 1}
+    rgba: 4278190080
+  m_fontColor: {r: 0, g: 0, b: 0, a: 1}
   m_enableVertexGradient: 0
   m_colorMode: 3
   m_fontColorGradient:
@@ -92,15 +92,15 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 0.3
-  m_fontSizeBase: 0.3
+  m_fontSize: 0.24
+  m_fontSizeBase: 0.24
   m_fontWeight: 400
   m_enableAutoSizing: 0
   m_fontSizeMin: 18
   m_fontSizeMax: 72
   m_fontStyle: 0
-  m_HorizontalAlignment: 1
-  m_VerticalAlignment: 256
+  m_HorizontalAlignment: 2
+  m_VerticalAlignment: 512
   m_textAlignment: 65535
   m_characterSpacing: 0
   m_characterHorizontalScale: 1
@@ -1166,12 +1166,11 @@ MonoBehaviour:
   SizeText: {fileID: 5746417288678221786}
   Abilitytext: {fileID: 2173619179933539058}
   nameText: {fileID: 3497567503084300030}
+  unitAbilityText: {fileID: 2173619179933539058}
   aText: {fileID: 2524395265824791353}
   dText: {fileID: 2957666871612388585}
   sText: {fileID: 6846831802363611239}
   abText: {fileID: 440619552338012059}
   imageObject: {fileID: 3430932802386646805}
-  aquaScoutSprite: {fileID: 3841003566487248638, guid: eced6dee4074fe94bb82c73421aabaf2, type: 3}
-  beachSprite: {fileID: 21300000, guid: 483b80e6a60a48f4fa230a10a232a8f7, type: 3}
-  oceanSprite: {fileID: -2923631271834578888, guid: a9995db3bbaf36549baada7554d024f3, type: 3}
   place: 0
+  isDraggable: 0

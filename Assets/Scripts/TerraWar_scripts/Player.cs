@@ -44,16 +44,17 @@ public class Player : MonoBehaviour
         createStartingCollection();
         initBattleDeck();
     }
-    void Update()
-    {
-        
-    }
     public Card drawCard()
     {
-        System.Random rand = new System.Random();
-        // Card randomCard = battleDeck[rand.Next(battleDeck.Count)];
-        Card randomCard = battleDeck[Random.Range(1,battleDeck.Count)];
-        battleDeck.Remove(randomCard);
+        if (battleDeck.Count == 0)
+        {
+            Debug.LogWarning("The player's battle deck is empty.", this);
+            return null;
+        }
+
+        int cardIndex = Random.Range(0, battleDeck.Count);
+        Card randomCard = battleDeck[cardIndex];
+        battleDeck.RemoveAt(cardIndex);
         return randomCard;
     }
 
@@ -83,9 +84,15 @@ public class Player : MonoBehaviour
     }
     public void initBattleDeck(){battleDeck = curDeck;}
     public void loseHealth(int h){Health -= h;}
-    public void payAether(int a){
-        if(Aether >= a){Aether -=a;} 
-        else Debug.LogWarning("Can't pay Aether!");
+    public bool payAether(int a){
+        if(Aether >= a)
+        {
+            Aether -= a;
+            return true;
+        }
+
+        Debug.LogWarning("Can't pay Aether!");
+        return false;
     }
     public void createStartingDeck()
     {
@@ -108,13 +115,18 @@ public class Player : MonoBehaviour
         addToCollection(lib.getUnitByName("Grove Sentinel"), 3);
         addToCollection(lib.getUnitByName("Dwarf"), 3);
         addToCollection(lib.getTerrainByName("Verdant Meadow"), 4);
+        addToCollection(lib.getTacticByName("Knowledge Vial"), 2);
+        addToCollection(lib.getTacticByName("Water Blast"), 2);
 
     }
 
     //now for gameplay decision methods
     public void activateCard(Card card)
     {
-        payAether(card.cost);
+        if (!payAether(card.cost))
+        {
+            return;
+        }
         //extra effects specific to a card go here from the lib
     }
 

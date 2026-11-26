@@ -103,7 +103,9 @@ public class CardLibrary
             new Tactic("Sudden Shield", 1, new string[]{"Selected Unit you control gains +2 Defense this turn."}),
             new Tactic("Draconic Flare", 4, new string[]{"Selected Fire Unit you control gains +1 Attack.", "That unit deals damage to all areas."}),
             new Tactic("Ruinous Rampage", 2, new string[]{"Selected Ruin Unit you control gains +3 Attack this turn and attacks every unit next to it."}),
-            new Tactic("High Tide", 2, new string[]{"Gain 4 Aether"})
+            new Tactic("High Tide", 2, new string[]{"Gain 4 Aether"}),
+            new Tactic("Water Blast",4,new string[]{"Selected Unit takes 3 damage."}),
+            new Tactic("Knowledge Vial",5,new string[]{"Draw three cards."})
         });
     }
 
@@ -139,17 +141,27 @@ public class CardLibrary
         Debug.LogWarning("Terrain " + name + " not found!");
         return null;
     }
-
+//for the player to resolve tactics. Opponent's tactics are resolved in Opponent.cs
     public void resolveTacticByName(string name)
     {
         switch (name)
         {
-            case "High Tide":
+            case "High Tide": //ramp 2 aether
                 Player.GetInstance().Aether += 4;
                 break;
             case "Sudden Shield":
                 BattlefieldManager.getInstance().selectAnyUnit().DEFENSE += 2;
                 break;
+            case "Water Blast":
+                Tile chosen = BattlefieldManager.getInstance().selectAnyUnitTile();
+                BattlefieldManager.getInstance().damageUnitsAt(chosen.x,chosen.y,3);
+                break;
+            case "Knowledge Vial": //draw 3
+                Player.GetInstance().curhand.Add(Player.GetInstance().drawCard());
+                Player.GetInstance().curhand.Add(Player.GetInstance().drawCard());
+                Player.GetInstance().curhand.Add(Player.GetInstance().drawCard());
+                BattlefieldManager.getInstance().updateHand();
+            break;
 
             default:
                 break;             

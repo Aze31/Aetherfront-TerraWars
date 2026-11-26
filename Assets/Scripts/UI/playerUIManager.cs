@@ -8,12 +8,7 @@ public class playerUIManager : MonoBehaviour
 
     public GameObject deckDisplayCanvas;
     public GameObject collectionDisplaycanvas;
-    public GameObject inspectorCanvas;
-    public Button buttonAdd;
-    public Button buttonRemove;
-    public Button incCopies;
-    public Button decCopies;
-    public int setCopies;
+    [SerializeField] private helpUI helpUi;
 
     void Start() //initialize both canvases to be not active
     {
@@ -28,19 +23,7 @@ public class playerUIManager : MonoBehaviour
         {
             deckDisplayCanvas.SetActive(false);
             collectionDisplaycanvas.SetActive(false);
+            helpUi.closePanel();
         }
-    }
-    //checks for button being pressed
-    public void OnButtonPressed(Button button)
-    {
-        if(button == incCopies)
-        {
-            setCopies++;
-        } else if(button == decCopies)
-        {
-            setCopies--;
-        }
-        else if(button == buttonAdd){}
-        else if(button == buttonRemove){}
     }
 }

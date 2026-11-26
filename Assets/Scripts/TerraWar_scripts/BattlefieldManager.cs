@@ -4,6 +4,8 @@ using static CardLibrary;
 using UnityEngine.UI;
 using TMPro;
 using UnityEngine.EventSystems;
+using System.Collections;
+using UnityEngine.InputSystem;
 
 
 public class BattlefieldManager : MonoBehaviour
@@ -28,35 +30,103 @@ public class BattlefieldManager : MonoBehaviour
     private void Start()
     {
         player = Player.GetInstance(); // to make sure we're getting the right instance of player
+        if (tacticZone == null)
+        {
+            Transform battleCanvas = transform.Find("BattleCanvas");
+            tacticZone = battleCanvas != null
+                ? battleCanvas.Find("TacticZone") as RectTransform
+                : null;
+        }
+        if (tacticZone == null)
+        {
+            Debug.LogError("BattlefieldManager requires a tactic zone RectTransform.", this);
+        }
+
         gameObject.SetActive(false);
+        passPhaseButton.onClick.AddListener(PassPhasePressed);
+        passTurnButton.onClick.AddListener(passTurnPressed);
     }
+    private void PassPhasePressed()
+    {
+        switch (currentPhase)
+        {
+            case gamePhase.YOUR_TURN:
+                currentPhase = gamePhase.YOUR_ATTACKS;
+                break;
+            case gamePhase.YOUR_ATTACKS:
+                currentPhase = gamePhase.ENEMY_TURN;
+
+                break;
+        }
+    }
+    private void passTurnPressed()
+    {
+        currentPhase = gamePhase.ENEMY_TURN;
+    }
+    
 
     private void Update()
     {
-        //i'll use this update to set the battle state situation based on phase
-        if(currentPhase == gamePhase.ENEMY_TURN || currentPhase == gamePhase.ENEMY_ATTACKS)
+        bool isPlayerActionPhase =
+            currentPhase == gamePhase.YOUR_TURN ||
+            currentPhase == gamePhase.YOUR_ATTACKS;
+        bool arrowPressed = ReadArrowKeyPress(out int deltaX, out int deltaY);
+        if (!isPlayerActionPhase)
         {
-            TerrainThisTurn = true;
+            DeselectSelectedUnit();
         }
+        else
+        {
+            HandleSelectionClick();
+            if (selectedUnit != null && arrowPressed)
+            {
+                if (currentPhase == gamePhase.YOUR_TURN)
+                {
+                    TryMoveSelectedUnit(deltaX, deltaY);
+                }
+                else
+                {
+                    TryAttackSelectedUnit(deltaX, deltaY);
+                }
+            }
+        }
+
+        //also update the phase UI while your at it
+        turnDisplay.text = currentPhase switch
+        {
+            gamePhase.YOUR_TURN => "your main",
+            gamePhase.YOUR_ATTACKS => "your attacks",
+            gamePhase.ENEMY_TURN => "enemy main",
+            gamePhase.ENEMY_ATTACKS => "enemy attacks",
+            _=> "error?"
+        };
     }
 
-    //another thing that could work is if I assign an object to attach to each tile object.
-    //this is probably simpler
     public TextMeshProUGUI AetherDisplay; 
+    public TextMeshProUGUI turnDisplay;
     //make an array of buttons to assign so this is easy
     public Button passTurnButton;
     public Button passPhaseButton;
     private const int BoardSize = 5;
     public static Tile[,] battleField = new Tile[BoardSize + 1, BoardSize + 1]; // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    private readonly TilePrefab[,] tileViews = new TilePrefab[BoardSize + 1, BoardSize + 1];
+    private Tile selectedUnitTile;
+    private Unit selectedUnit;
+    private TilePrefab selectedUnitView;
+    private bool upArrowHeld;
+    private bool downArrowHeld;
+    private bool leftArrowHeld;
+    private bool rightArrowHeld;
     [SerializeField]
     private Transform HandScrollView; // for hand visualization
     [SerializeField]
     private cardPrefab cardPrefabForHand;
+    public RectTransform tacticZone;
     private Player player = Player.GetInstance();
     private const float HandCardDisplayScale = 35f;
     private const float HandCardSpacing = 8f;
     private const int HandCardsPerRow = 2;
-    public bool TerrainThisTurn; // basically the negation of whether you can place a terrain right now
+    public bool TerrainThisTurn; // whether the player has placed a terrain this turn
     public enum gamePhase
     {
         YOUR_TURN, ENEMY_TURN, YOUR_ATTACKS, ENEMY_ATTACKS, GAME_END, ERROR, OUT_OF_GAME
@@ -75,6 +145,7 @@ public class BattlefieldManager : MonoBehaviour
 
     public void setUpBattlefield(int i)
     {
+        DeselectSelectedUnit();
         initTiles();
         gameObject.SetActive(true);
         if(i == 1)
@@ -83,11 +154,92 @@ public class BattlefieldManager : MonoBehaviour
             updateHand();
             setAetherCount(0);
         }
+        currentPhase = gamePhase.YOUR_TURN; // player goes first
+        TerrainThisTurn = false;
+        ResetUnitMovement();
+    }
+    public void startPlayerTurn()
+    {
+        if (player == null)
+        {
+            player = Player.GetInstance();
+        }
+
+        if (player == null)
+        {
+            Debug.LogError("Cannot start the player's turn because no Player instance exists.", this);
+            return;
+        }
+
+        currentPhase = gamePhase.YOUR_TURN;
+        TerrainThisTurn = false;
+        ResetUnitMovement();
+        DeselectSelectedUnit();
+
+        int controlledTerrainCount = 0;
+        foreach (Tile tile in battleField)
+        {
+            if (tile != null && tile.curTerrain != null && tile.playerControlsTerrain)
+            {
+                controlledTerrainCount++;
+            }
+        }
+
+        player.Aether += controlledTerrainCount;
+        updateAetherDisplay();
+
+        Card drawnCard = player.drawCard();
+        if (drawnCard != null)
+        {
+            player.curhand.Add(drawnCard);
+        }
+        updateHand();
     }
     public void setAetherCount(int c)
     {
         player.Aether = c;
-        AetherDisplay.text = c.ToString();
+        updateAetherDisplay();
+    }
+
+    public void updateAetherDisplay()
+    {
+        if (AetherDisplay == null)
+        {
+            Debug.LogError("BattlefieldManager requires an Aether display.", this);
+            return;
+        }
+
+        AetherDisplay.text = player.Aether.ToString();
+    }
+
+    public bool IsPointerOverTacticZone(Vector2 screenPosition)
+    {
+        if (tacticZone == null)
+        {
+            return false;
+        }
+
+        Canvas zoneCanvas = tacticZone.GetComponentInParent<Canvas>();
+        if (zoneCanvas == null)
+        {
+            Debug.LogError("The tactic zone must be under a Canvas.", tacticZone);
+            return false;
+        }
+
+        Canvas rootCanvas = zoneCanvas.rootCanvas;
+        Camera camera = rootCanvas.renderMode == RenderMode.ScreenSpaceOverlay
+            ? null
+            : rootCanvas.worldCamera;
+        if (rootCanvas.renderMode != RenderMode.ScreenSpaceOverlay && camera == null)
+        {
+            Debug.LogError("The tactic zone Canvas requires a world camera.", rootCanvas);
+            return false;
+        }
+
+        return RectTransformUtility.RectangleContainsScreenPoint(
+            tacticZone,
+            screenPosition,
+            camera);
     }
 
     //checks if two tiles are adjacent to each other
@@ -106,28 +258,466 @@ public class BattlefieldManager : MonoBehaviour
         );
     }
 
-    public void placeUnitAt(int x, int y, Unit unit)
+    public void placeUnitAt(int x, int y, Unit unit, bool playerControlsUnit = true)
     {
-        battleField[x,y].putUnitHere(unit);
+        Tile tile = battleField[x, y];
+        if (tile == null || unit == null)
+        {
+            Debug.LogError("Cannot place a unit on a missing tile or with a null unit.", this);
+            return;
+        }
+
+        if (tile.curTerrain == null || tile.playerControlsTerrain != playerControlsUnit)
+        {
+            Debug.LogError("A unit can only be placed on terrain controlled by the same side.", this);
+            return;
+        }
+
+        if (!tile.canHoldUnit(unit))
+        {
+            Debug.LogError("The tile cannot hold this unit.", this);
+            return;
+        }
+
+        tile.putUnitHere(unit);
+        if (unit.ability == Ability.FLYING)
+        {
+            tile.skyOccupied = true;
+            tile.playerControlsFlyingUnit = playerControlsUnit;
+            tile.flyingUnitMovedThisTurn = false;
+        }
+        else
+        {
+            tile.groundOccupied = true;
+            tile.playerControlsGroundUnit = playerControlsUnit;
+            tile.groundUnitMovedThisTurn = false;
+        }
     }
     public void removeUnitsAt(int x, int y)
     {
-        if(battleField[x,y].unitHere != null || battleField[x,y].unitFlyingHere != null)
+        Tile tile = battleField[x, y];
+        if (tile != null)
         {
-            battleField[x,y].unitHere = null;
-            battleField[x,y].unitFlyingHere = null;
+            if (selectedUnitTile == tile)
+            {
+                DeselectSelectedUnit();
+            }
+
+            if (tile.unitHere != null)
+            {
+                RemoveUnitFromTile(tile, tile.unitHere);
+            }
+
+            if (tile.unitFlyingHere != null)
+            {
+                RemoveUnitFromTile(tile, tile.unitFlyingHere);
+            }
+
+            tile.unitHere = null;
+            tile.unitFlyingHere = null;
+            tile.groundOccupied = false;
+            tile.skyOccupied = false;
+            tile.playerControlsGroundUnit = false;
+            tile.playerControlsFlyingUnit = false;
+            tile.groundUnitMovedThisTurn = false;
+            tile.flyingUnitMovedThisTurn = false;
         }
     }
     public void damageUnitsAt(int x, int y, int ATTACK)
     {
-        //remove all Units at this location if their defense is too low
-        if(battleField[x,y].unitHere != null && battleField[x,y].unitHere.DEFENSE <= ATTACK)
+        Tile tile = battleField[x, y];
+        if (tile == null)
         {
-            battleField[x,y].unitHere = null;
+            return;
         }
-        if(battleField[x,y].unitFlyingHere != null && battleField[x,y].unitFlyingHere.DEFENSE <= ATTACK)
+
+        if (tile.unitHere != null && tile.unitHere.DEFENSE <= ATTACK)
         {
-            battleField[x,y].unitFlyingHere = null;
+            RemoveUnitFromTile(tile, tile.unitHere);
+        }
+        if (tile.unitFlyingHere != null && tile.unitFlyingHere.DEFENSE <= ATTACK)
+        {
+            RemoveUnitFromTile(tile, tile.unitFlyingHere);
+        }
+    }
+
+    private void RemoveUnitFromTile(Tile tile, Unit unit)
+    {
+        if (tile == null || unit == null)
+        {
+            return;
+        }
+
+        bool isFlyingUnit = tile.unitFlyingHere == unit;
+        if (!isFlyingUnit && tile.unitHere != unit)
+        {
+            return;
+        }
+
+        if (selectedUnitTile == tile && selectedUnit == unit)
+        {
+            DeselectSelectedUnit();
+        }
+
+        TilePrefab tileView = tileViews[tile.x, tile.y];
+        if (tileView != null)
+        {
+            tileView.ClearUnitSprite(unit);
+        }
+        else
+        {
+            Debug.LogError("Cannot clear a removed unit's sprite because its tile view is not registered.", this);
+        }
+
+        if (isFlyingUnit)
+        {
+            tile.unitFlyingHere = null;
+            tile.skyOccupied = false;
+            tile.playerControlsFlyingUnit = false;
+            tile.flyingUnitMovedThisTurn = false;
+        }
+        else
+        {
+            tile.unitHere = null;
+            tile.groundOccupied = false;
+            tile.playerControlsGroundUnit = false;
+            tile.groundUnitMovedThisTurn = false;
+        }
+    }
+
+    public void RegisterTilePrefab(TilePrefab tileView)
+    {
+        if (tileView == null ||
+            tileView.x < 1 || tileView.x > BoardSize ||
+            tileView.y < 1 || tileView.y > BoardSize)
+        {
+            Debug.LogError("Cannot register a tile view with invalid board coordinates.", tileView);
+            return;
+        }
+
+        tileViews[tileView.x, tileView.y] = tileView;
+    }
+
+    public bool TrySetTileCardSpriteAt(int x, int y, Card card, Sprite cardSprite)
+    {
+        if (x < 1 || x > BoardSize || y < 1 || y > BoardSize)
+        {
+            Debug.LogError("Cannot set a card sprite at invalid tile coordinates.", this);
+            return false;
+        }
+
+        TilePrefab tileView = tileViews[x, y];
+        if (tileView == null)
+        {
+            Debug.LogError("Cannot set a card sprite because the tile view is not registered.", this);
+            return false;
+        }
+
+        return tileView.TrySetCardSprite(card, cardSprite);
+    }
+
+    public void SelectUnit(TilePrefab tileView, Unit unit)
+    {
+        if ((currentPhase != gamePhase.YOUR_TURN &&
+             currentPhase != gamePhase.YOUR_ATTACKS) ||
+            tileView == null ||
+            unit == null ||
+            tileView.x < 1 || tileView.x > BoardSize ||
+            tileView.y < 1 || tileView.y > BoardSize)
+        {
+            DeselectSelectedUnit();
+            return;
+        }
+
+        Tile tile = battleField[tileView.x, tileView.y];
+        if (!IsPlayerUnitOnTile(tile, unit))
+        {
+            DeselectSelectedUnit();
+            return;
+        }
+
+        if (selectedUnit == unit && selectedUnitTile == tile)
+        {
+            return;
+        }
+
+        DeselectSelectedUnit();
+        if (!tileView.SetUnitSelected(unit, true))
+        {
+            return;
+        }
+
+        selectedUnitTile = tile;
+        selectedUnit = unit;
+        selectedUnitView = tileView;
+    }
+
+    public void DeselectSelectedUnit()
+    {
+        if (selectedUnitView != null && selectedUnit != null)
+        {
+            selectedUnitView.SetUnitSelected(selectedUnit, false);
+        }
+
+        selectedUnitTile = null;
+        selectedUnit = null;
+        selectedUnitView = null;
+    }
+
+    public void HandleTileClicked(TilePrefab clickedTileView)
+    {
+        if ((currentPhase != gamePhase.YOUR_TURN &&
+             currentPhase != gamePhase.YOUR_ATTACKS) ||
+            clickedTileView == null ||
+            clickedTileView.x < 1 || clickedTileView.x > BoardSize ||
+            clickedTileView.y < 1 || clickedTileView.y > BoardSize)
+        {
+            DeselectSelectedUnit();
+            return;
+        }
+
+        Tile tile = battleField[clickedTileView.x, clickedTileView.y];
+        Unit clickedUnit = tile != null && tile.unitHere != null && tile.playerControlsGroundUnit
+            ? tile.unitHere
+            : tile != null && tile.unitFlyingHere != null && tile.playerControlsFlyingUnit
+                ? tile.unitFlyingHere
+                : null;
+        if (clickedUnit == null)
+        {
+            DeselectSelectedUnit();
+            return;
+        }
+
+        SelectUnit(clickedTileView, clickedUnit);
+    }
+
+    private void HandleSelectionClick()
+    {
+        if (Mouse.current == null ||
+            !Mouse.current.leftButton.wasPressedThisFrame)
+        {
+            return;
+        }
+
+        Camera camera = Camera.main;
+        if (camera == null)
+        {
+            Debug.LogError("Cannot detect a clicked board tile because no Main Camera exists.", this);
+            DeselectSelectedUnit();
+            return;
+        }
+
+        RaycastHit2D[] hits = Physics2D.GetRayIntersectionAll(
+            camera.ScreenPointToRay(Mouse.current.position.ReadValue()));
+        foreach (RaycastHit2D hit in hits)
+        {
+            TilePrefab clickedTileView = hit.collider != null
+                ? hit.collider.GetComponentInParent<TilePrefab>()
+                : null;
+            if (clickedTileView != null)
+            {
+                HandleTileClicked(clickedTileView);
+                return;
+            }
+        }
+
+        DeselectSelectedUnit();
+    }
+
+    private bool ReadArrowKeyPress(out int deltaX, out int deltaY)
+    {
+        deltaX = 0;
+        deltaY = 0;
+        Keyboard keyboard = Keyboard.current;
+        bool upPressed = keyboard != null && keyboard.upArrowKey.isPressed;
+        bool downPressed = keyboard != null && keyboard.downArrowKey.isPressed;
+        bool leftPressed = keyboard != null && keyboard.leftArrowKey.isPressed;
+        bool rightPressed = keyboard != null && keyboard.rightArrowKey.isPressed;
+
+        bool upJustPressed = upPressed && !upArrowHeld;
+        bool downJustPressed = downPressed && !downArrowHeld;
+        bool leftJustPressed = leftPressed && !leftArrowHeld;
+        bool rightJustPressed = rightPressed && !rightArrowHeld;
+        upArrowHeld = upPressed;
+        downArrowHeld = downPressed;
+        leftArrowHeld = leftPressed;
+        rightArrowHeld = rightPressed;
+
+        if (upJustPressed)
+        {
+            deltaY = 1;
+        }
+        else if (downJustPressed)
+        {
+            deltaY = -1;
+        }
+        else if (leftJustPressed)
+        {
+            deltaX = -1;
+        }
+        else if (rightJustPressed)
+        {
+            deltaX = 1;
+        }
+        else
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    private void TryAttackSelectedUnit(int deltaX, int deltaY)
+    {
+        if (currentPhase != gamePhase.YOUR_ATTACKS ||
+            selectedUnit == null ||
+            selectedUnitTile == null ||
+            !IsPlayerUnitOnTile(selectedUnitTile, selectedUnit))
+        {
+            return;
+        }
+
+        int targetX = selectedUnitTile.x + deltaX;
+        int targetY = selectedUnitTile.y + deltaY;
+        if (targetX < 1 || targetX > BoardSize || targetY < 1 || targetY > BoardSize)
+        {
+            return;
+        }
+
+        Tile targetTile = battleField[targetX, targetY];
+        if (targetTile == null)
+        {
+            return;
+        }
+
+        Unit defender = null;
+        if (selectedUnit.ability == Ability.FLYING)
+        {
+            if (targetTile.unitFlyingHere != null && !targetTile.playerControlsFlyingUnit)
+            {
+                defender = targetTile.unitFlyingHere;
+            }
+            else if (targetTile.unitHere != null && !targetTile.playerControlsGroundUnit)
+            {
+                defender = targetTile.unitHere;
+            }
+        }
+        else if (targetTile.unitHere != null && !targetTile.playerControlsGroundUnit)
+        {
+            defender = targetTile.unitHere;
+        }
+
+        if (defender != null && selectedUnit.ATTACK >= defender.DEFENSE)
+        {
+            RemoveUnitFromTile(targetTile, defender);
+        }
+    }
+
+    private bool CanMoveUnitTo(Tile source, Unit unit, int destinationX, int destinationY)
+    {
+        if (currentPhase != gamePhase.YOUR_TURN ||
+            source == null ||
+            unit == null ||
+            !IsPlayerUnitOnTile(source, unit) ||
+            HasUnitMovedThisTurn(source, unit) ||
+            destinationX < 1 || destinationX > BoardSize ||
+            destinationY < 1 || destinationY > BoardSize ||
+            Math.Abs(source.x - destinationX) + Math.Abs(source.y - destinationY) != 1)
+        {
+            return false;
+        }
+
+        Tile destination = battleField[destinationX, destinationY];
+        return destination != null && destination.canHoldUnit(unit);
+    }
+
+    private void TryMoveSelectedUnit(int deltaX, int deltaY)
+    {
+        if (selectedUnitTile == null || selectedUnit == null || selectedUnitView == null)
+        {
+            return;
+        }
+
+        Tile source = selectedUnitTile;
+        Unit unit = selectedUnit;
+        int destinationX = source.x + deltaX;
+        int destinationY = source.y + deltaY;
+        if (!CanMoveUnitTo(source, unit, destinationX, destinationY))
+        {
+            return;
+        }
+
+        Tile destination = battleField[destinationX, destinationY];
+        TilePrefab sourceView = tileViews[source.x, source.y];
+        TilePrefab destinationView = tileViews[destinationX, destinationY];
+        if (sourceView == null || destinationView == null)
+        {
+            Debug.LogError("Cannot move a unit because a source or destination tile view is missing.", this);
+            return;
+        }
+
+        sourceView.SetUnitSelected(unit, false);
+        if (!sourceView.TryMoveUnitSpriteTo(destinationView, unit))
+        {
+            sourceView.SetUnitSelected(unit, true);
+            return;
+        }
+
+        bool isFlying = source.unitFlyingHere == unit;
+        if (isFlying)
+        {
+            source.unitFlyingHere = null;
+            source.skyOccupied = false;
+            source.playerControlsFlyingUnit = false;
+            source.flyingUnitMovedThisTurn = false;
+            destination.unitFlyingHere = unit;
+            destination.skyOccupied = true;
+            destination.playerControlsFlyingUnit = true;
+            destination.flyingUnitMovedThisTurn = true;
+        }
+        else
+        {
+            source.unitHere = null;
+            source.groundOccupied = false;
+            source.playerControlsGroundUnit = false;
+            source.groundUnitMovedThisTurn = false;
+            destination.unitHere = unit;
+            destination.groundOccupied = true;
+            destination.playerControlsGroundUnit = true;
+            destination.groundUnitMovedThisTurn = true;
+        }
+
+        selectedUnitTile = destination;
+        selectedUnitView = destinationView;
+        if (!selectedUnitView.SetUnitSelected(unit, true))
+        {
+            DeselectSelectedUnit();
+        }
+    }
+
+    private static bool IsPlayerUnitOnTile(Tile tile, Unit unit)
+    {
+        return tile != null &&
+            ((tile.unitHere == unit && tile.playerControlsGroundUnit) ||
+             (tile.unitFlyingHere == unit && tile.playerControlsFlyingUnit));
+    }
+
+    private static bool HasUnitMovedThisTurn(Tile tile, Unit unit)
+    {
+        return tile.unitHere == unit
+            ? tile.groundUnitMovedThisTurn
+            : tile.flyingUnitMovedThisTurn;
+    }
+
+    private static void ResetUnitMovement()
+    {
+        foreach (Tile tile in battleField)
+        {
+            if (tile != null)
+            {
+                tile.groundUnitMovedThisTurn = false;
+                tile.flyingUnitMovedThisTurn = false;
+            }
         }
     }
 
@@ -247,14 +837,20 @@ public class BattlefieldManager : MonoBehaviour
     {
         return battleField[x,y].curTerrain != null;
     }
-    public void placeTerrainAt(int x, int y, Terrain terrain)
+    public void placeTerrainAt(int x, int y, Terrain terrain, bool playerControlsTerrain = true)
     {
         battleField[x,y].curTerrain = terrain;
+        battleField[x,y].playerControlsTerrain = playerControlsTerrain;
     }
     public Unit selectAnyUnit()
     {
-        //TODO: fill this in with a visual where the player gets to click a Unit (technically a tile with unit on it) and it returns that unit
+        //TODO: fill this in later with a visual where the player gets to click a Unit (or more technically a tile with unit on it) and it returns that unit
         return new Unit("0",0,0,0,Element.COSMIC);
+    }
+    public Tile selectAnyUnitTile()
+    {
+        //TODO: fill this in later with a visual where the player can select any tile with a unit on it
+        return new Tile(0,0);
     }
 }
 
@@ -262,8 +858,13 @@ public class BattlefieldManager : MonoBehaviour
 public class Tile
 {
     public Terrain curTerrain;
+    public bool playerControlsTerrain;
     public Unit unitHere; //track the unit on this terrain
     public Unit unitFlyingHere; //track flying unit here (if applicable)
+    public bool playerControlsGroundUnit;
+    public bool playerControlsFlyingUnit;
+    public bool groundUnitMovedThisTurn;
+    public bool flyingUnitMovedThisTurn;
     //the above two store the current state of the unit, so stat mods will happen to those objects up there
     public Boolean groundOccupied; //counts underwater and underground
     public Boolean skyOccupied; //could literally just check if unitFlyingHere is null
@@ -282,6 +883,13 @@ public class Tile
         if(creatureAbility == Ability.SWIM){return (curTerrain.condition == PassCondition.SWIM || 
             curTerrain.condition == PassCondition.NONE) && !groundOccupied;}
         return !groundOccupied && curTerrain.condition == PassCondition.NONE;
+    }
+    public bool canHoldUnit(Unit unit)
+    {
+        return unit != null &&
+            curTerrain != null &&
+            (unit.ability == Ability.FLYING || unit.size <= curTerrain.size) &&
+            canCross(unit.ability);
     }
     public int getX(){return this.x;}
     public int getY(){return this.y;}
