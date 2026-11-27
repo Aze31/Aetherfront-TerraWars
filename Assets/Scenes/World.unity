@@ -1193,6 +1193,7 @@ MonoBehaviour:
   Health: 25
   Aether: 0
   defaultSprite: {fileID: 10806177, guid: 5941600aa39ebb449bf8f6086dbf94a9, type: 3}
+  timeInterval: 1
   started: 0
 --- !u!1 &98424036
 GameObject:

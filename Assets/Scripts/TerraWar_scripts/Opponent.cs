@@ -1,19 +1,44 @@
+using System.Collections;
 using System.Collections.Generic;
 using System.Transactions;
 using Unity.Collections;
+using UnityEditor.Tilemaps;
 using UnityEngine;
+using static CardLibrary;
+using Math = System.Math;
 public class Opponent : MonoBehaviour
 {
     //this opponent behaviour script is simplistic and actions it takes are mostly random
     public List<Card> curDeck = new List<Card>();
     public List<Card> curHand = new List<Card>();
-    public double Health = 25;
+    public double Health = 15;
     public double Aether;
     public Sprite defaultSprite;
+    public float timeInterval = 1f;
     private CardLibrary lib;
     private BattlefieldManager manager;
     private Dictionary<string, Sprite> spritesByName;
+    private bool playerDirectDamageDealtThisTurn;
     public bool started = false;
+
+    public void loseHealth(int amount)
+    {
+        Health -= amount;
+    }
+
+    private struct UnitStartPosition
+    {
+        public int x;
+        public int y;
+        public Unit unit;
+
+        public UnitStartPosition(int x, int y, Unit unit)
+        {
+            this.x = x;
+            this.y = y;
+            this.unit = unit;
+        }
+    }
 
     private void Start()
     {
@@ -47,8 +72,15 @@ public class Opponent : MonoBehaviour
             lib.getUnitByName("Molten Golem"),
             lib.getUnitByName("Molten Golem"),
             lib.getUnitByName("Molten Golem"),
+            lib.getUnitByName("Flame Warrior"),
+            lib.getUnitByName("Flame Warrior"),
+            lib.getUnitByName("Flame Warrior"),
 
         });
+    }
+    public void initRuinDeck()
+    {
+        
     }
     public void prepForBattle(int num)
     {
@@ -115,6 +147,11 @@ public class Opponent : MonoBehaviour
     //The opponent gains one Aether for each terrain it controls before its turn.
     public void MyTurnStart()
     {
+        if (started)
+        {
+            return;
+        }
+
         if (manager == null)
         {
             manager = BattlefieldManager.getInstance();
@@ -127,6 +164,12 @@ public class Opponent : MonoBehaviour
         }
 
         started = true;
+        playerDirectDamageDealtThisTurn = false;
+        StartCoroutine(PerformTurn());
+    }
+
+    private IEnumerator PerformTurn()
+    {
         foreach (Tile tile in BattlefieldManager.battleField)
         {
             if (tile != null && tile.curTerrain != null && !tile.playerControlsTerrain)
@@ -141,13 +184,92 @@ public class Opponent : MonoBehaviour
             curHand.Add(drawnCard);
         }
 
-        if (!TryPlaceTerrain(overlaysOnly: true) &&
-            !TryPlaceTerrain(overlaysOnly: false))
+        bool playedCard = TryPlaceTerrain(overlaysOnly: true);
+        if (!playedCard)
         {
-            TryPlaceUnit();
+            playedCard = TryPlaceTerrain(overlaysOnly: false);
+        }
+        if (!playedCard)
+        {
+            playedCard = TryPlaceUnit();
+        }
+
+        if (playedCard && timeInterval > 0f)
+        {
+            yield return new WaitForSeconds(timeInterval);
+        }
+
+        foreach (UnitStartPosition unitStart in GetOpponentUnitsFrontToBack())
+        {
+            if (TryMoveUnitTowardPlayer(unitStart) && timeInterval > 0f)
+            {
+                yield return new WaitForSeconds(timeInterval);
+            }
         }
 
         GoToMain();
+    }
+
+    private List<UnitStartPosition> GetOpponentUnitsFrontToBack()
+    {
+        List<UnitStartPosition> units = new List<UnitStartPosition>();
+        Tile[,] battlefield = BattlefieldManager.battleField;
+        for (int y = 1; y < battlefield.GetLength(1); y++)
+        {
+            for (int x = 1; x < battlefield.GetLength(0); x++)
+            {
+                Tile tile = battlefield[x, y];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                if (tile.unitHere != null && !tile.playerControlsGroundUnit)
+                {
+                    units.Add(new UnitStartPosition(x, y, tile.unitHere));
+                }
+
+                if (tile.unitFlyingHere != null && !tile.playerControlsFlyingUnit)
+                {
+                    units.Add(new UnitStartPosition(x, y, tile.unitFlyingHere));
+                }
+            }
+        }
+
+        return units;
+    }
+
+    private bool TryMoveUnitTowardPlayer(UnitStartPosition unitStart)
+    {
+        int destinationY = unitStart.y - 1;
+        if (destinationY < 1)
+        {
+            return false;
+        }
+
+        Tile destination = BattlefieldManager.battleField[unitStart.x, destinationY];
+        if (destination == null || !destination.canHoldUnit(unitStart.unit))
+        {
+            return false;
+        }
+
+        if (!manager.TryMoveUnitTo(
+                unitStart.unit,
+                unitStart.x,
+                unitStart.y,
+                unitStart.x,
+                destinationY,
+                false))
+        {
+            return false;
+        }
+
+        Debug.Log(
+            "Opponent: Moving " + unitStart.unit.name +
+            " from (" + unitStart.x + ", " + unitStart.y +
+            ") to (" + unitStart.x + ", " + destinationY + ")",
+            this);
+        return true;
     }
 
     private bool TryPlaceTerrain(bool overlaysOnly)
@@ -317,23 +439,148 @@ public class Opponent : MonoBehaviour
     public void GoToMain()
     {
         manager.currentPhase = BattlefieldManager.gamePhase.ENEMY_TURN;
-        //check if units are available to attack directly, or other units can be killed
-        //the first bot isn't for bathbuilding, so meh
-        // foreach(Tile t in BattlefieldManager.battleField)
-        // {
-        //     if(t.curTerrain != null && !t.playerControlsTerrain && t.unitHere != null || t.unitFlyingHere != null)
-        //     {
-        //         goToAttacks();
-        //     }
-        // }
-        endMyTurn();
+        //check if there are any useful movements to be made (forward)
+        goToAttacks();
+        // endMyTurn();
     }
     public void goToAttacks()
     {
         manager.currentPhase = BattlefieldManager.gamePhase.ENEMY_ATTACKS;
-        //remember: ground/sea Units can attack each other, neither can attack flying units, and flying Units can attack everything.
+        StartCoroutine(ResolveAttacksAndEndTurn());
+    }
+
+    private IEnumerator ResolveAttacksAndEndTurn()
+    {
+        foreach (UnitStartPosition attacker in GetOpponentUnitsFrontToBack())
+        {
+            bool performedAttack = TryDamagePlayerDirectly(attacker);
+            if (!performedAttack)
+            {
+                performedAttack = TryAttackPlayerUnit(attacker);
+            }
+
+            if (performedAttack && timeInterval > 0f)
+            {
+                yield return new WaitForSeconds(timeInterval);
+            }
+        }
+
         endMyTurn();
     }
+
+    private bool TryAttackPlayerUnit(UnitStartPosition attackerPosition)
+    {
+        Tile[,] battlefield = BattlefieldManager.battleField;
+        Tile attackerTile = battlefield[attackerPosition.x, attackerPosition.y];
+        Unit attacker = attackerPosition.unit;
+        if (attackerTile == null || attacker == null)
+        {
+            return false;
+        }
+
+        bool attackerStillOnTile = attacker.ability == Ability.FLYING
+            ? attackerTile.unitFlyingHere == attacker && !attackerTile.playerControlsFlyingUnit
+            : attackerTile.unitHere == attacker && !attackerTile.playerControlsGroundUnit;
+        if (!attackerStillOnTile)
+        {
+            return false;
+        }
+
+        for (int x = Math.Max(1, attackerTile.x - 1);
+             x <= Math.Min(battlefield.GetLength(0) - 1, attackerTile.x + 1);
+             x++)
+        {
+            for (int y = Math.Max(1, attackerTile.y - 1);
+                 y <= Math.Min(battlefield.GetLength(1) - 1, attackerTile.y + 1);
+                 y++)
+            {
+                Tile targetTile = battlefield[x, y];
+                if (targetTile == null || !manager.checkifNext(attackerTile, targetTile))
+                {
+                    continue;
+                }
+
+                Unit target = null;
+                if (attacker.ability == Ability.FLYING &&
+                    targetTile.unitFlyingHere != null &&
+                    targetTile.playerControlsFlyingUnit)
+                {
+                    target = targetTile.unitFlyingHere;
+                }
+                else if (targetTile.unitHere != null && targetTile.playerControlsGroundUnit)
+                {
+                    target = targetTile.unitHere;
+                }
+
+                if (target != null && attacker.ATTACK > target.DEFENSE)
+                {
+                    return manager.TryRemoveUnitFromTile(targetTile, target);
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private bool TryDamagePlayerDirectly(UnitStartPosition attackerPosition)
+    {
+        if (manager.currentPhase != BattlefieldManager.gamePhase.ENEMY_ATTACKS ||
+            playerDirectDamageDealtThisTurn)
+        {
+            return false;
+        }
+
+        Tile[,] battlefield = BattlefieldManager.battleField;
+        Tile attackerTile = battlefield[attackerPosition.x, attackerPosition.y];
+        Unit attacker = attackerPosition.unit;
+        if (attackerTile == null || attacker == null)
+        {
+            return false;
+        }
+
+        bool attackerStillOnTile = attacker.ability == Ability.FLYING
+            ? attackerTile.unitFlyingHere == attacker && !attackerTile.playerControlsFlyingUnit
+            : attackerTile.unitHere == attacker && !attackerTile.playerControlsGroundUnit;
+        if (!attackerStillOnTile ||
+            (attackerTile.y != 1 && !HasClearPathToPlayer(attacker, attackerTile)))
+        {
+            return false;
+        }
+
+        Player player = Player.GetInstance();
+        if (player == null)
+        {
+            Debug.LogError("Cannot damage the player because no Player instance exists.", this);
+            return false;
+        }
+
+        player.loseHealth(attacker.ATTACK);
+        playerDirectDamageDealtThisTurn = true;
+        Debug.Log(
+            "Opponent: " + attacker.name + " dealt " + attacker.ATTACK +
+            " direct damage. Player health: " + player.Health,
+            this);
+        return true;
+    }
+
+    private bool HasClearPathToPlayer(Unit attacker, Tile attackerTile)
+    {
+        Tile[,] battlefield = BattlefieldManager.battleField;
+        for (int y = attackerTile.y - 1; y >= 1; y--)
+        {
+            Tile pathTile = battlefield[attackerTile.x, y];
+            if (pathTile == null ||
+                pathTile.unitHere != null ||
+                pathTile.unitFlyingHere != null ||
+                !pathTile.canCross(attacker.ability))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public void endMyTurn() //universal flag setter for ending the opponent's turn, add whatever is necessary later
     {
         if (manager == null)

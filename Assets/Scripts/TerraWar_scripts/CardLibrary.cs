@@ -38,7 +38,7 @@ public class CardLibrary
     public enum PassCondition
     {
         SWIM,
-        CANSWIM, // both swimonly and ground can be here
+        CANSWIM, // swimonly, swim, and non-swimming ground units can cross
         DIG,
         FLYING,
         NONE // default i think
@@ -56,14 +56,13 @@ public class CardLibrary
         Units.AddRange(new Unit[]
         {
             new Unit("Ember Drake", 1, 2, 1, Element.FIRE, Ability.FLYING),
-            new Unit("Warrior of Flames",1,3,2, Element.FIRE, Ability.NONE),
             new Unit("HeatQuill Hedgehog",2,2,2,Element.FIRE, Ability.BURN),
             new Unit("Aqua Scout",2,1,1, Element.WATER), //should this guy know how to swim?
             new Unit("Marsh Serpent", 3,2,5, Element.WATER, Ability.SWIM),
             new Unit("Grove Sentinel",3, 1, 1, Element.NATURE),
             new Unit("Dwarf", 2, 1, 2, Element.NATURE),
             new Unit("Grave-Burrow Lurker", 1, 2, 2, 1, Element.RUIN, Ability.DIG),
-            new Unit("Ancient Ruins Dragon",5,5,3,9,Element.RUIN, Ability.FLYING),
+            new Unit("Ancient Ruins Dragon", 5, 3, 9,Element.RUIN, Ability.FLYING),
             new Unit("Blazehorn Charger", 2, 3, 4, Element.FIRE),
             new Unit("Tidebender Serpent", 1, 3, 2, 3, Element.WATER, Ability.SWIMONLY),
             new Unit("Great Green Shark",4,3,7,Element.WATER, Ability.SWIMONLY),
@@ -72,8 +71,8 @@ public class CardLibrary
             new Unit("AshArrow Archer",1,2,1,Element.FIRE, Ability.RANGE1),
             new Unit("Keen-eyed Shark",1,3,2,3,Element.WATER, Ability.SWIMONLY),
             new Unit("Airborne Guardian", 1,1,3,2,Element.WIND, Ability.FLYING),
-            new Unit("Molten Golem", 4,4,6,Element.FIRE, Ability.NONE),
-            new Unit("Flame Warrior",1,2,2,2,Element.FIRE),
+            new Unit("Molten Golem", 4,4,8,Element.FIRE, Ability.NONE),
+            new Unit("Flame Warrior",1,2,2,3,Element.FIRE),
             new Unit("Lightning Artist",1,2,2,2,Element.LIGHTNING, Ability.RANGE1), //remove r1?
             new Unit("Echoed Wyvern", 0, 2, 3, 3, Element.COSMIC, Ability.INVISIBLE)
             
@@ -87,11 +86,11 @@ public class CardLibrary
             new Terrain("Ocean", 1, Element.WATER, "Water Units here gain +1 Defense.", 0, PassCondition.SWIM),
             new Terrain("Beach", 1, Element.WATER, "", 0),
             new Terrain("Verdant Meadow", 1, Element.NATURE, "", 0),
-            new Terrain("Marsh", 1, Element.WATER, "Water Units here gain +1 defense",0),
+            new Terrain("Marsh", 1, Element.WATER, "", 0, PassCondition.CANSWIM),
             new Terrain("Grave Ruins", 1, Element.RUIN, "Ruin Units you control take up no space here.", 0),
             new Terrain("Thunderbroken Plain", 2, Element.LIGHTNING, "Lightning and Water Units here gain Swim.",1, PassCondition.SWIM),
             new Terrain("Ancient Temple", 1, Element.RUIN, "Ruin and Nature Units next to this gain +1 Defense.", 0, Element.NATURE),
-            new Terrain("Desert",2, Element.FIRE, "Fire Units here gain +1 Defense",0),
+            new Terrain("Desert", 2, Element.FIRE, "Fire Units here gain +1 Defense", 0),
             new Terrain("Thunderfalls",1, Element.LIGHTNING, "Lightning Units here (with RANGE0) gain RANGE1 and +1 Attack",0),
             new Terrain("Frozen Lake",1, Element.WATER, "Water Units here that can swim cannot be attacked by Units that can't swim.",1, Element.WATER),
         });
@@ -105,7 +104,8 @@ public class CardLibrary
             new Tactic("Ruinous Rampage", 2, new string[]{"Selected Ruin Unit you control gains +3 Attack this turn and attacks every unit next to it."}),
             new Tactic("High Tide", 2, new string[]{"Gain 4 Aether"}),
             new Tactic("Water Blast",4,new string[]{"Selected Unit takes 3 damage."}),
-            new Tactic("Knowledge Vial",5,new string[]{"Draw three cards."})
+            new Tactic("Knowledge Vial",5,new string[]{"Draw three cards."}),
+            new Tactic("Burning Flare", 4, new string[]{"Opponent takes 4 damage."})
         });
     }
 

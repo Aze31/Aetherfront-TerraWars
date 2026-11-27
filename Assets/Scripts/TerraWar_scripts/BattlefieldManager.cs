@@ -100,6 +100,9 @@ public class BattlefieldManager : MonoBehaviour
             gamePhase.ENEMY_ATTACKS => "enemy attacks",
             _=> "error?"
         };
+        //add display stuff in here
+        enemyLife.text = opponent.Health.ToString();
+        playerLife.text = player.Health.ToString();
     }
 
     public TextMeshProUGUI AetherDisplay; 
@@ -117,6 +120,7 @@ public class BattlefieldManager : MonoBehaviour
     private bool downArrowHeld;
     private bool leftArrowHeld;
     private bool rightArrowHeld;
+    private Opponent opponent;
     [SerializeField]
     private Transform HandScrollView; // for hand visualization
     [SerializeField]
@@ -132,6 +136,8 @@ public class BattlefieldManager : MonoBehaviour
         YOUR_TURN, ENEMY_TURN, YOUR_ATTACKS, ENEMY_ATTACKS, GAME_END, ERROR, OUT_OF_GAME
     }
     public gamePhase currentPhase;
+    public TextMeshProUGUI playerLife;
+    public TextMeshProUGUI enemyLife;
 
     //use this to set the current state of an empty battlefield
     public void initTiles(){
@@ -186,6 +192,7 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         player.Aether += controlledTerrainCount;
+        Debug.Log("Aether just incremented by: " + controlledTerrainCount);
         updateAetherDisplay();
 
         Card drawnCard = player.drawCard();
@@ -385,6 +392,19 @@ public class BattlefieldManager : MonoBehaviour
         }
     }
 
+    public bool TryRemoveUnitFromTile(Tile tile, Unit unit)
+    {
+        if (tile == null ||
+            unit == null ||
+            (tile.unitHere != unit && tile.unitFlyingHere != unit))
+        {
+            return false;
+        }
+
+        RemoveUnitFromTile(tile, unit);
+        return true;
+    }
+
     public void RegisterTilePrefab(TilePrefab tileView)
     {
         if (tileView == null ||
@@ -577,6 +597,19 @@ public class BattlefieldManager : MonoBehaviour
             return;
         }
 
+        if (deltaX == 0 &&
+            deltaY == 1 &&
+            HasClearPathToOpponent(selectedUnit, selectedUnitTile))
+        {
+            Opponent targetOpponent = GetOpponent();
+            if (targetOpponent != null)
+            {
+                targetOpponent.loseHealth(selectedUnit.ATTACK);
+            }
+
+            return;
+        }
+
         int targetX = selectedUnitTile.x + deltaX;
         int targetY = selectedUnitTile.y + deltaY;
         if (targetX < 1 || targetX > BoardSize || targetY < 1 || targetY > BoardSize)
@@ -613,22 +646,145 @@ public class BattlefieldManager : MonoBehaviour
         }
     }
 
-    private bool CanMoveUnitTo(Tile source, Unit unit, int destinationX, int destinationY)
+    private bool HasClearPathToOpponent(Unit unit, Tile sourceTile)
     {
-        if (currentPhase != gamePhase.YOUR_TURN ||
-            source == null ||
+        for (int y = sourceTile.y + 1; y <= BoardSize; y++)
+        {
+            Tile pathTile = battleField[sourceTile.x, y];
+            if (pathTile == null ||
+                pathTile.unitHere != null ||
+                pathTile.unitFlyingHere != null ||
+                !pathTile.canCross(unit.ability))
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private Opponent GetOpponent()
+    {
+        if (opponent == null)
+        {
+            opponent = FindAnyObjectByType<Opponent>();
+        }
+
+        if (opponent == null)
+        {
+            Debug.LogError("Cannot damage the opponent because no Opponent component exists.", this);
+        }
+
+        return opponent;
+    }
+
+    private bool CanMoveUnitTo(
+        Unit unit,
+        int sourceX,
+        int sourceY,
+        int destinationX,
+        int destinationY,
+        bool playerControlsUnit)
+    {
+        gamePhase requiredPhase = playerControlsUnit
+            ? gamePhase.YOUR_TURN
+            : gamePhase.ENEMY_TURN;
+        if (currentPhase != requiredPhase ||
             unit == null ||
-            !IsPlayerUnitOnTile(source, unit) ||
-            HasUnitMovedThisTurn(source, unit) ||
+            sourceX < 1 || sourceX > BoardSize ||
+            sourceY < 1 || sourceY > BoardSize ||
             destinationX < 1 || destinationX > BoardSize ||
             destinationY < 1 || destinationY > BoardSize ||
-            Math.Abs(source.x - destinationX) + Math.Abs(source.y - destinationY) != 1)
+            Math.Abs(sourceX - destinationX) + Math.Abs(sourceY - destinationY) != 1)
         {
             return false;
         }
 
+        Tile source = battleField[sourceX, sourceY];
         Tile destination = battleField[destinationX, destinationY];
-        return destination != null && destination.canHoldUnit(unit);
+        if (source == null || destination == null)
+        {
+            return false;
+        }
+
+        bool isFlying = unit.ability == Ability.FLYING;
+        bool unitIsOnSource = isFlying
+            ? source.unitFlyingHere == unit && source.playerControlsFlyingUnit == playerControlsUnit
+            : source.unitHere == unit && source.playerControlsGroundUnit == playerControlsUnit;
+        return unitIsOnSource &&
+            !HasUnitMovedThisTurn(source, unit) &&
+            destination.canHoldUnit(unit);
+    }
+
+    public bool TryMoveUnitTo(
+        Unit unit,
+        int sourceX,
+        int sourceY,
+        int destinationX,
+        int destinationY,
+        bool playerControlsUnit)
+    {
+        if (!CanMoveUnitTo(
+                unit,
+                sourceX,
+                sourceY,
+                destinationX,
+                destinationY,
+                playerControlsUnit))
+        {
+            return false;
+        }
+
+        Tile source = battleField[sourceX, sourceY];
+        Tile destination = battleField[destinationX, destinationY];
+        TilePrefab sourceView = tileViews[sourceX, sourceY];
+        TilePrefab destinationView = tileViews[destinationX, destinationY];
+        if (sourceView == null || destinationView == null)
+        {
+            Debug.LogError("Cannot move a unit because a source or destination tile view is missing.", this);
+            return false;
+        }
+
+        bool isSelectedUnit = selectedUnit == unit && selectedUnitTile == source;
+        if (isSelectedUnit)
+        {
+            sourceView.SetUnitSelected(unit, false);
+        }
+
+        if (!sourceView.TryMoveUnitSpriteTo(destinationView, unit))
+        {
+            if (isSelectedUnit)
+            {
+                sourceView.SetUnitSelected(unit, true);
+            }
+
+            return false;
+        }
+
+        if (unit.ability == Ability.FLYING)
+        {
+            source.unitFlyingHere = null;
+            source.skyOccupied = false;
+            source.playerControlsFlyingUnit = false;
+            source.flyingUnitMovedThisTurn = false;
+            destination.unitFlyingHere = unit;
+            destination.skyOccupied = true;
+            destination.playerControlsFlyingUnit = playerControlsUnit;
+            destination.flyingUnitMovedThisTurn = true;
+        }
+        else
+        {
+            source.unitHere = null;
+            source.groundOccupied = false;
+            source.playerControlsGroundUnit = false;
+            source.groundUnitMovedThisTurn = false;
+            destination.unitHere = unit;
+            destination.groundOccupied = true;
+            destination.playerControlsGroundUnit = playerControlsUnit;
+            destination.groundUnitMovedThisTurn = true;
+        }
+
+        return true;
     }
 
     private void TryMoveSelectedUnit(int deltaX, int deltaY)
@@ -642,54 +798,20 @@ public class BattlefieldManager : MonoBehaviour
         Unit unit = selectedUnit;
         int destinationX = source.x + deltaX;
         int destinationY = source.y + deltaY;
-        if (!CanMoveUnitTo(source, unit, destinationX, destinationY))
+        if (!TryMoveUnitTo(
+                unit,
+                source.x,
+                source.y,
+                destinationX,
+                destinationY,
+                true))
         {
             return;
         }
 
-        Tile destination = battleField[destinationX, destinationY];
-        TilePrefab sourceView = tileViews[source.x, source.y];
-        TilePrefab destinationView = tileViews[destinationX, destinationY];
-        if (sourceView == null || destinationView == null)
-        {
-            Debug.LogError("Cannot move a unit because a source or destination tile view is missing.", this);
-            return;
-        }
-
-        sourceView.SetUnitSelected(unit, false);
-        if (!sourceView.TryMoveUnitSpriteTo(destinationView, unit))
-        {
-            sourceView.SetUnitSelected(unit, true);
-            return;
-        }
-
-        bool isFlying = source.unitFlyingHere == unit;
-        if (isFlying)
-        {
-            source.unitFlyingHere = null;
-            source.skyOccupied = false;
-            source.playerControlsFlyingUnit = false;
-            source.flyingUnitMovedThisTurn = false;
-            destination.unitFlyingHere = unit;
-            destination.skyOccupied = true;
-            destination.playerControlsFlyingUnit = true;
-            destination.flyingUnitMovedThisTurn = true;
-        }
-        else
-        {
-            source.unitHere = null;
-            source.groundOccupied = false;
-            source.playerControlsGroundUnit = false;
-            source.groundUnitMovedThisTurn = false;
-            destination.unitHere = unit;
-            destination.groundOccupied = true;
-            destination.playerControlsGroundUnit = true;
-            destination.groundUnitMovedThisTurn = true;
-        }
-
-        selectedUnitTile = destination;
-        selectedUnitView = destinationView;
-        if (!selectedUnitView.SetUnitSelected(unit, true))
+        selectedUnitTile = battleField[destinationX, destinationY];
+        selectedUnitView = tileViews[destinationX, destinationY];
+        if (selectedUnitView == null || !selectedUnitView.SetUnitSelected(unit, true))
         {
             DeselectSelectedUnit();
         }
@@ -839,8 +961,29 @@ public class BattlefieldManager : MonoBehaviour
     }
     public void placeTerrainAt(int x, int y, Terrain terrain, bool playerControlsTerrain = true)
     {
-        battleField[x,y].curTerrain = terrain;
-        battleField[x,y].playerControlsTerrain = playerControlsTerrain;
+        Tile tile = battleField[x, y];
+        bool passConditionChanged = tile.curTerrain != null &&
+            tile.curTerrain.condition != terrain.condition;
+
+        tile.curTerrain = terrain;
+        tile.playerControlsTerrain = playerControlsTerrain;
+
+        if (!passConditionChanged)
+        {
+            return;
+        }
+
+        if (tile.unitHere != null &&
+            !tile.canPassTerrain(tile.unitHere.ability, terrain))
+        {
+            RemoveUnitFromTile(tile, tile.unitHere);
+        }
+
+        if (tile.unitFlyingHere != null &&
+            !tile.canPassTerrain(tile.unitFlyingHere.ability, terrain))
+        {
+            RemoveUnitFromTile(tile, tile.unitFlyingHere);
+        }
     }
     public Unit selectAnyUnit()
     {
@@ -879,10 +1022,40 @@ public class Tile
     //return if the passed creature.ability can pass this tile
     {
         if(creatureAbility == Ability.FLYING){return !skyOccupied;}
-        if(creatureAbility == Ability.SWIMONLY){return curTerrain.condition == PassCondition.SWIM && !groundOccupied;}
-        if(creatureAbility == Ability.SWIM){return (curTerrain.condition == PassCondition.SWIM || 
-            curTerrain.condition == PassCondition.NONE) && !groundOccupied;}
-        return !groundOccupied && curTerrain.condition == PassCondition.NONE;
+        if (groundOccupied)
+        {
+            return false;
+        }
+
+        if (curTerrain == null)
+        {
+            return false;
+        }
+
+        return canPassTerrain(creatureAbility, curTerrain);
+    }
+
+    public bool canPassTerrain(Ability creatureAbility, Terrain terrain)
+    {
+        if (creatureAbility == Ability.FLYING)
+        {
+            return true;
+        }
+
+        if (terrain == null)
+        {
+            return false;
+        }
+
+        if (terrain.condition == PassCondition.CANSWIM)
+        {
+            return true;
+        }
+
+        if(creatureAbility == Ability.SWIMONLY){return terrain.condition == PassCondition.SWIM;}
+        if(creatureAbility == Ability.SWIM){return (terrain.condition == PassCondition.SWIM || 
+            terrain.condition == PassCondition.NONE);}
+        return terrain.condition == PassCondition.NONE;
     }
     public bool canHoldUnit(Unit unit)
     {
