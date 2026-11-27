@@ -50,7 +50,7 @@ public class TilePrefab : MonoBehaviour
         {
             manager.HandleTileClicked(this);
         }
-        Debug.LogWarning("Tile (" + this.x + ", " + this.y + ") was pressed! IT WORKED", this);
+        Debug.LogWarning("Tile (" + this.x + ", " + this.y + ") was pressed!", this);
     }
 
     private bool nextToTerrain()

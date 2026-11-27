@@ -1,8 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using System.Transactions;
-using Unity.Collections;
-using UnityEditor.Tilemaps;
 using UnityEngine;
 using static CardLibrary;
 using Math = System.Math;
@@ -18,7 +15,6 @@ public class Opponent : MonoBehaviour
     private CardLibrary lib;
     private BattlefieldManager manager;
     private Dictionary<string, Sprite> spritesByName;
-    private bool playerDirectDamageDealtThisTurn;
     public bool started = false;
 
     public void loseHealth(int amount)
@@ -78,9 +74,16 @@ public class Opponent : MonoBehaviour
 
         });
     }
+    public void clearDeck()
+    {
+        curDeck = new List<Card>();
+    }
     public void initRuinDeck()
     {
-        
+        curDeck.AddRange(new Card[]
+        {
+            
+        });
     }
     public void prepForBattle(int num)
     {
@@ -147,6 +150,12 @@ public class Opponent : MonoBehaviour
     //The opponent gains one Aether for each terrain it controls before its turn.
     public void MyTurnStart()
     {
+        if(Health <= 1)
+        {
+            manager.playerWon();
+            clearDeck();
+            Player.GetInstance().rewardCollection();
+        }
         if (started)
         {
             return;
@@ -164,7 +173,6 @@ public class Opponent : MonoBehaviour
         }
 
         started = true;
-        playerDirectDamageDealtThisTurn = false;
         StartCoroutine(PerformTurn());
     }
 
@@ -302,6 +310,7 @@ public class Opponent : MonoBehaviour
                     {
                         candidateTiles.Add(tile);
                     }
+                    
                 }
             }
 
@@ -478,6 +487,11 @@ public class Opponent : MonoBehaviour
             return false;
         }
 
+        if (manager.HasUnitAttackedThisTurn(attackerTile, attacker))
+        {
+            return false;
+        }
+
         bool attackerStillOnTile = attacker.ability == Ability.FLYING
             ? attackerTile.unitFlyingHere == attacker && !attackerTile.playerControlsFlyingUnit
             : attackerTile.unitHere == attacker && !attackerTile.playerControlsGroundUnit;
@@ -512,7 +526,9 @@ public class Opponent : MonoBehaviour
                     target = targetTile.unitHere;
                 }
 
-                if (target != null && attacker.ATTACK > target.DEFENSE)
+                if (target != null &&
+                    attacker.ATTACK > target.DEFENSE &&
+                    manager.MarkUnitAttackedThisTurn(attackerTile, attacker))
                 {
                     return manager.TryRemoveUnitFromTile(targetTile, target);
                 }
@@ -524,8 +540,7 @@ public class Opponent : MonoBehaviour
 
     private bool TryDamagePlayerDirectly(UnitStartPosition attackerPosition)
     {
-        if (manager.currentPhase != BattlefieldManager.gamePhase.ENEMY_ATTACKS ||
-            playerDirectDamageDealtThisTurn)
+        if (manager.currentPhase != BattlefieldManager.gamePhase.ENEMY_ATTACKS)
         {
             return false;
         }
@@ -534,6 +549,11 @@ public class Opponent : MonoBehaviour
         Tile attackerTile = battlefield[attackerPosition.x, attackerPosition.y];
         Unit attacker = attackerPosition.unit;
         if (attackerTile == null || attacker == null)
+        {
+            return false;
+        }
+
+        if (manager.HasUnitAttackedThisTurn(attackerTile, attacker))
         {
             return false;
         }
@@ -554,8 +574,12 @@ public class Opponent : MonoBehaviour
             return false;
         }
 
+        if (!manager.MarkUnitAttackedThisTurn(attackerTile, attacker))
+        {
+            return false;
+        }
+
         player.loseHealth(attacker.ATTACK);
-        playerDirectDamageDealtThisTurn = true;
         Debug.Log(
             "Opponent: " + attacker.name + " dealt " + attacker.ATTACK +
             " direct damage. Player health: " + player.Health,
@@ -570,6 +594,7 @@ public class Opponent : MonoBehaviour
         {
             Tile pathTile = battlefield[attackerTile.x, y];
             if (pathTile == null ||
+                pathTile.curTerrain == null ||
                 pathTile.unitHere != null ||
                 pathTile.unitFlyingHere != null ||
                 !pathTile.canCross(attacker.ability))

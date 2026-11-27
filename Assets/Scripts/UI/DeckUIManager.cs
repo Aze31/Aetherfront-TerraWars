@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,12 +11,26 @@ public class DeckUIManager : MonoBehaviour
 
     public GameObject deckPanel;
     public GameObject cardPrefab;
+    public TextMeshProUGUI healthText;
+    public TextMeshProUGUI deckSize;
+    public TextMeshProUGUI colSize;
 
     private readonly List<GameObject> displayedCards = new List<GameObject>();
 
     private void OnEnable()
     {
         RefreshDeck();
+        updateHealth();
+        updateSizes();
+    }
+    private void updateHealth()
+    {
+        healthText.text = "Health: " + Player.GetInstance().Health.ToString();
+    }
+    private void updateSizes()
+    {
+        colSize.text = "Collection Size: " + Player.GetInstance().cardCollection.Count.ToString();
+        deckSize.text = "Deck size: " + Player.GetInstance().curDeck.Count.ToString();
     }
 
     private void RefreshDeck()

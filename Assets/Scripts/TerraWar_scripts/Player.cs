@@ -31,6 +31,7 @@ public class Player : MonoBehaviour
     public List<Card> curDeck = new List<Card>(); //deck
     public double Health = 50; //dead if below zero
     public double Aether;
+    public int collectionLevel = 1;
     private CardLibrary lib = CardLibrary.getInstance();
     public cardPrefab currentlyDragging = null;
 
@@ -69,6 +70,16 @@ public class Player : MonoBehaviour
             }
         }
         return null;
+    }
+    public void rewardCollection()
+    {
+        if(collectionLevel == 1)
+        {
+            collectionLevel++;
+            addToCollection(lib.getUnitByName("Mystic Elf"), 3);
+            addToCollection(lib.getUnitByName("Blazehorn Charger"), 3);
+            addToCollection(lib.getUnitByName("Desert"), 1);
+        }
     }
 
     public void addToDeck(Card card, int copies)

@@ -30,6 +30,7 @@ public class BattlefieldManager : MonoBehaviour
     private void Start()
     {
         player = Player.GetInstance(); // to make sure we're getting the right instance of player
+        opponent = GetOpponent();
         if (tacticZone == null)
         {
             Transform battleCanvas = transform.Find("BattleCanvas");
@@ -122,15 +123,16 @@ public class BattlefieldManager : MonoBehaviour
     private bool rightArrowHeld;
     private Opponent opponent;
     [SerializeField]
-    private Transform HandScrollView; // for hand visualization
+    private Transform HandScrollView;
     [SerializeField]
     private cardPrefab cardPrefabForHand;
     public RectTransform tacticZone;
+    public NarrativeText narrativeText;
     private Player player = Player.GetInstance();
     private const float HandCardDisplayScale = 35f;
     private const float HandCardSpacing = 8f;
     private const int HandCardsPerRow = 2;
-    public bool TerrainThisTurn; // whether the player has placed a terrain this turn
+    public bool TerrainThisTurn;
     public enum gamePhase
     {
         YOUR_TURN, ENEMY_TURN, YOUR_ATTACKS, ENEMY_ATTACKS, GAME_END, ERROR, OUT_OF_GAME
@@ -162,7 +164,7 @@ public class BattlefieldManager : MonoBehaviour
         }
         currentPhase = gamePhase.YOUR_TURN; // player goes first
         TerrainThisTurn = false;
-        ResetUnitMovement();
+        ResetUnitTurnState();
     }
     public void startPlayerTurn()
     {
@@ -179,7 +181,7 @@ public class BattlefieldManager : MonoBehaviour
 
         currentPhase = gamePhase.YOUR_TURN;
         TerrainThisTurn = false;
-        ResetUnitMovement();
+        ResetUnitTurnState();
         DeselectSelectedUnit();
 
         int controlledTerrainCount = 0;
@@ -217,6 +219,14 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         AetherDisplay.text = player.Aether.ToString();
+    }
+    public void playerWon()
+    {
+        gameObject.SetActive(false);
+        currentPhase = gamePhase.OUT_OF_GAME;
+
+        narrativeText.startTypingText("You have defeated the goblin! Well done! (by the way, try checking your collection)");
+        //find a way to check the Wizard sprite and restore his pose
     }
 
     public bool IsPointerOverTacticZone(Vector2 screenPosition)
@@ -292,12 +302,14 @@ public class BattlefieldManager : MonoBehaviour
             tile.skyOccupied = true;
             tile.playerControlsFlyingUnit = playerControlsUnit;
             tile.flyingUnitMovedThisTurn = false;
+            tile.flyingUnitAttackedThisTurn = false;
         }
         else
         {
             tile.groundOccupied = true;
             tile.playerControlsGroundUnit = playerControlsUnit;
             tile.groundUnitMovedThisTurn = false;
+            tile.groundUnitAttackedThisTurn = false;
         }
     }
     public void removeUnitsAt(int x, int y)
@@ -328,6 +340,8 @@ public class BattlefieldManager : MonoBehaviour
             tile.playerControlsFlyingUnit = false;
             tile.groundUnitMovedThisTurn = false;
             tile.flyingUnitMovedThisTurn = false;
+            tile.groundUnitAttackedThisTurn = false;
+            tile.flyingUnitAttackedThisTurn = false;
         }
     }
     public void damageUnitsAt(int x, int y, int ATTACK)
@@ -382,6 +396,7 @@ public class BattlefieldManager : MonoBehaviour
             tile.skyOccupied = false;
             tile.playerControlsFlyingUnit = false;
             tile.flyingUnitMovedThisTurn = false;
+            tile.flyingUnitAttackedThisTurn = false;
         }
         else
         {
@@ -389,6 +404,7 @@ public class BattlefieldManager : MonoBehaviour
             tile.groundOccupied = false;
             tile.playerControlsGroundUnit = false;
             tile.groundUnitMovedThisTurn = false;
+            tile.groundUnitAttackedThisTurn = false;
         }
     }
 
@@ -497,6 +513,18 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         Tile tile = battleField[clickedTileView.x, clickedTileView.y];
+        Unit opponentUnit = tile != null && tile.unitHere != null && !tile.playerControlsGroundUnit
+            ? tile.unitHere
+            : tile != null && tile.unitFlyingHere != null && !tile.playerControlsFlyingUnit
+                ? tile.unitFlyingHere
+                : null;
+        if (opponentUnit != null)
+        {
+            DeselectSelectedUnit();
+            ShowOpponentUnitInfo(opponentUnit);
+            return;
+        }
+
         Unit clickedUnit = tile != null && tile.unitHere != null && tile.playerControlsGroundUnit
             ? tile.unitHere
             : tile != null && tile.unitFlyingHere != null && tile.playerControlsFlyingUnit
@@ -509,6 +537,16 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         SelectUnit(clickedTileView, clickedUnit);
+    }
+
+    private void ShowOpponentUnitInfo(Unit unit)
+    {
+        string abilityText = unit.ability == Ability.NONE
+            ? string.Empty
+            : ", and has " + unit.ability.ToString().ToLowerInvariant();
+        narrativeText.startTypingText(
+            unit.name + " has " + unit.ATTACK + " attack, and " + unit.DEFENSE +
+            " defense" + abilityText + ".");
     }
 
     private void HandleSelectionClick()
@@ -592,7 +630,8 @@ public class BattlefieldManager : MonoBehaviour
         if (currentPhase != gamePhase.YOUR_ATTACKS ||
             selectedUnit == null ||
             selectedUnitTile == null ||
-            !IsPlayerUnitOnTile(selectedUnitTile, selectedUnit))
+            !IsPlayerUnitOnTile(selectedUnitTile, selectedUnit) ||
+            HasUnitAttackedThisTurn(selectedUnitTile, selectedUnit))
         {
             return;
         }
@@ -602,7 +641,8 @@ public class BattlefieldManager : MonoBehaviour
             HasClearPathToOpponent(selectedUnit, selectedUnitTile))
         {
             Opponent targetOpponent = GetOpponent();
-            if (targetOpponent != null)
+            if (targetOpponent != null &&
+                MarkUnitAttackedThisTurn(selectedUnitTile, selectedUnit))
             {
                 targetOpponent.loseHealth(selectedUnit.ATTACK);
             }
@@ -640,7 +680,24 @@ public class BattlefieldManager : MonoBehaviour
             defender = targetTile.unitHere;
         }
 
-        if (defender != null && selectedUnit.ATTACK >= defender.DEFENSE)
+        if (defender == null)
+        {
+            if (selectedUnit.ability != Ability.FLYING &&
+                targetTile.unitFlyingHere != null &&
+                !targetTile.playerControlsFlyingUnit)
+            {
+                narrativeText.startTypingText("Cannot attack target with flying!");
+            }
+            else if (targetTile.unitHere == null && targetTile.unitFlyingHere == null)
+            {
+                narrativeText.startTypingText("that tile is empty!");
+            }
+
+            return;
+        }
+
+        if (selectedUnit.ATTACK >= defender.DEFENSE &&
+            MarkUnitAttackedThisTurn(selectedUnitTile, selectedUnit))
         {
             RemoveUnitFromTile(targetTile, defender);
         }
@@ -652,6 +709,7 @@ public class BattlefieldManager : MonoBehaviour
         {
             Tile pathTile = battleField[sourceTile.x, y];
             if (pathTile == null ||
+                pathTile.curTerrain == null ||
                 pathTile.unitHere != null ||
                 pathTile.unitFlyingHere != null ||
                 !pathTile.canCross(unit.ability))
@@ -711,9 +769,25 @@ public class BattlefieldManager : MonoBehaviour
         bool unitIsOnSource = isFlying
             ? source.unitFlyingHere == unit && source.playerControlsFlyingUnit == playerControlsUnit
             : source.unitHere == unit && source.playerControlsGroundUnit == playerControlsUnit;
-        return unitIsOnSource &&
-            !HasUnitMovedThisTurn(source, unit) &&
-            destination.canHoldUnit(unit);
+        if (!unitIsOnSource || HasUnitMovedThisTurn(source, unit))
+        {
+            return false;
+        }
+
+        if (playerControlsUnit && destination.curTerrain == null)
+        {
+            narrativeText.startTypingText("that tile is empty!");
+            return false;
+        }
+
+        if (playerControlsUnit &&
+            !destination.canPassTerrain(unit.ability, destination.curTerrain))
+        {
+            narrativeText.startTypingText("Your Unit cannot cross that Terrain!");
+            return false;
+        }
+
+        return destination.canHoldUnit(unit);
     }
 
     public bool TryMoveUnitTo(
@@ -763,25 +837,31 @@ public class BattlefieldManager : MonoBehaviour
 
         if (unit.ability == Ability.FLYING)
         {
+            bool hasAttacked = source.flyingUnitAttackedThisTurn;
             source.unitFlyingHere = null;
             source.skyOccupied = false;
             source.playerControlsFlyingUnit = false;
             source.flyingUnitMovedThisTurn = false;
+            source.flyingUnitAttackedThisTurn = false;
             destination.unitFlyingHere = unit;
             destination.skyOccupied = true;
             destination.playerControlsFlyingUnit = playerControlsUnit;
             destination.flyingUnitMovedThisTurn = true;
+            destination.flyingUnitAttackedThisTurn = hasAttacked;
         }
         else
         {
+            bool hasAttacked = source.groundUnitAttackedThisTurn;
             source.unitHere = null;
             source.groundOccupied = false;
             source.playerControlsGroundUnit = false;
             source.groundUnitMovedThisTurn = false;
+            source.groundUnitAttackedThisTurn = false;
             destination.unitHere = unit;
             destination.groundOccupied = true;
             destination.playerControlsGroundUnit = playerControlsUnit;
             destination.groundUnitMovedThisTurn = true;
+            destination.groundUnitAttackedThisTurn = hasAttacked;
         }
 
         return true;
@@ -831,7 +911,46 @@ public class BattlefieldManager : MonoBehaviour
             : tile.flyingUnitMovedThisTurn;
     }
 
-    private static void ResetUnitMovement()
+    public bool HasUnitAttackedThisTurn(Tile tile, Unit unit)
+    {
+        if (tile == null || unit == null)
+        {
+            return true;
+        }
+
+        return unit.ability == Ability.FLYING
+            ? tile.unitFlyingHere != unit || tile.flyingUnitAttackedThisTurn
+            : tile.unitHere != unit || tile.groundUnitAttackedThisTurn;
+    }
+
+    public bool MarkUnitAttackedThisTurn(Tile tile, Unit unit)
+    {
+        if (tile == null || unit == null)
+        {
+            return false;
+        }
+
+        if (unit.ability == Ability.FLYING)
+        {
+            if (tile.unitFlyingHere != unit || tile.flyingUnitAttackedThisTurn)
+            {
+                return false;
+            }
+
+            tile.flyingUnitAttackedThisTurn = true;
+            return true;
+        }
+
+        if (tile.unitHere != unit || tile.groundUnitAttackedThisTurn)
+        {
+            return false;
+        }
+
+        tile.groundUnitAttackedThisTurn = true;
+        return true;
+    }
+
+    private static void ResetUnitTurnState()
     {
         foreach (Tile tile in battleField)
         {
@@ -839,6 +958,8 @@ public class BattlefieldManager : MonoBehaviour
             {
                 tile.groundUnitMovedThisTurn = false;
                 tile.flyingUnitMovedThisTurn = false;
+                tile.groundUnitAttackedThisTurn = false;
+                tile.flyingUnitAttackedThisTurn = false;
             }
         }
     }
@@ -1008,6 +1129,8 @@ public class Tile
     public bool playerControlsFlyingUnit;
     public bool groundUnitMovedThisTurn;
     public bool flyingUnitMovedThisTurn;
+    public bool groundUnitAttackedThisTurn;
+    public bool flyingUnitAttackedThisTurn;
     //the above two store the current state of the unit, so stat mods will happen to those objects up there
     public Boolean groundOccupied; //counts underwater and underground
     public Boolean skyOccupied; //could literally just check if unitFlyingHere is null

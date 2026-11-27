@@ -72,12 +72,14 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         }
         if(card is Terrain terrain)
         {
-            if (unitAbilityText != null)
+            if (unitAbilityText != null && terrain.effect.Length >= 1)
             {
                 unitAbilityText.gameObject.SetActive(false);
+            } else
+            {
+                abText.SetActive(true);
             }
             SizeText.text = terrain.size.ToString();
-            // abText.SetActive(true);
             aText.SetActive(false);
             dText.SetActive(false);
             Abilitytext.text = terrain.effect.ToString();
@@ -92,7 +94,7 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
             aText.SetActive(false);
             dText.SetActive(false);
             sText.SetActive(false);
-            //abText.SetActive(true);
+            abText.SetActive(true);
         }
         SpriteRenderer cardImageRenderer = imageObject != null
             ? imageObject.GetComponent<SpriteRenderer>()

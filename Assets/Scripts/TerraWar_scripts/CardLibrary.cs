@@ -1,5 +1,6 @@
 using UnityEngine;
 using System.Collections.Generic;
+using JetBrains.Annotations;
 public class CardLibrary
 {
     private static CardLibrary instance;
@@ -65,7 +66,7 @@ public class CardLibrary
             new Unit("Ancient Ruins Dragon", 5, 3, 9,Element.RUIN, Ability.FLYING),
             new Unit("Blazehorn Charger", 2, 3, 4, Element.FIRE),
             new Unit("Tidebender Serpent", 1, 3, 2, 3, Element.WATER, Ability.SWIMONLY),
-            new Unit("Great Green Shark",4,3,7,Element.WATER, Ability.SWIMONLY),
+            new Unit("Great Green Shark",4,4,7,Element.WATER, Ability.SWIMONLY),
             new Unit("Brave Seagull",1,1,2,Element.WATER, Ability.FLYING),
             new Unit("Catacomb Stalker", 2, 2, 4, Element.RUIN),
             new Unit("AshArrow Archer",1,2,1,Element.FIRE, Ability.RANGE1),
@@ -74,14 +75,15 @@ public class CardLibrary
             new Unit("Molten Golem", 4,4,8,Element.FIRE, Ability.NONE),
             new Unit("Flame Warrior",1,2,2,3,Element.FIRE),
             new Unit("Lightning Artist",1,2,2,2,Element.LIGHTNING, Ability.RANGE1), //remove r1?
-            new Unit("Echoed Wyvern", 0, 2, 3, 3, Element.COSMIC, Ability.INVISIBLE)
+            new Unit("Echoed Wyvern", 0, 2, 3, 3, Element.COSMIC, Ability.INVISIBLE),
+            new Unit("Mystic Elf",3,1,3,Element.NATURE)
             
         });
         Terrains.AddRange(new Terrain[]
         {
             //name, size, type, effect, cost, passCondition/overlay type
             //how overlay works is that a terrain of that element can 'cover up' this terrain. It should rarely come up but still be relevant and interesting nuance
-            new Terrain("Volcano", 1, Element.FIRE, "Fire Units here gain +1 Attack.", 0, Element.WATER),
+            new Terrain("Volcano", 1, Element.FIRE, "", 0, Element.WATER),
             new Terrain("Mountains",2,Element.EARTH, "Earth and Wind Units here gain +1 Defense.", 1),
             new Terrain("Ocean", 1, Element.WATER, "Water Units here gain +1 Defense.", 0, PassCondition.SWIM),
             new Terrain("Beach", 1, Element.WATER, "", 0),
@@ -90,9 +92,9 @@ public class CardLibrary
             new Terrain("Grave Ruins", 1, Element.RUIN, "Ruin Units you control take up no space here.", 0),
             new Terrain("Thunderbroken Plain", 2, Element.LIGHTNING, "Lightning and Water Units here gain Swim.",1, PassCondition.SWIM),
             new Terrain("Ancient Temple", 1, Element.RUIN, "Ruin and Nature Units next to this gain +1 Defense.", 0, Element.NATURE),
-            new Terrain("Desert", 2, Element.FIRE, "Fire Units here gain +1 Defense", 0),
+            new Terrain("Desert", 2, Element.FIRE, "Fire Units here gain +1 Attack", 0),
             new Terrain("Thunderfalls",1, Element.LIGHTNING, "Lightning Units here (with RANGE0) gain RANGE1 and +1 Attack",0),
-            new Terrain("Frozen Lake",1, Element.WATER, "Water Units here that can swim cannot be attacked by Units that can't swim.",1, Element.WATER),
+            new Terrain("Frozen Lake",1, Element.WATER, "Non-water Units here get -1 Defense",1, Element.WATER),
         });
         Tactics.AddRange(new Tactic[]
         {
@@ -165,6 +167,28 @@ public class CardLibrary
 
             default:
                 break;             
+        }
+        
+    }
+    public Unit resolveTerrainOnUnit(string terrainName, Unit unit)
+    {
+        switch (terrainName)
+        {
+            case "Frozen Lake":
+                if(unit.type != Element.WATER){
+                unit.DEFENSE -= 1;
+                }
+                return unit;
+            case "Desert" : 
+                if(unit.type == Element.FIRE)
+                    {
+                        unit.ATTACK +=1;
+                    }
+                return unit;
+
+            default: //reset to og unit stats whenever it moves
+            //this means that terrain and tactic buffs are local to a terrain it is what it is
+            return getUnitByName(unit.name);
         }
     }
 
