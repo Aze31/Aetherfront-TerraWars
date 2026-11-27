@@ -13,7 +13,11 @@ public class Unit : Card
     public int ATTACK;
     public Element type;
     public Ability ability;
-    public Ability ability1;
+    public Ability ability1 = Ability.NONE;
+    private int terrainAttackModifier;
+    private int terrainDefenseModifier;
+    private int temporaryAttackModifier;
+    private int temporaryDefenseModifier;
     public Unit(string name, int s, int d, int a, int cost, Element type)
     {
         ATTACK = a;
@@ -66,6 +70,37 @@ public class Unit : Card
         this.type = type;
         this.ability = ability;
         this.ability1 = ability1;
+    }
+
+    public Unit CreateBattlefieldCopy()
+    {
+        Unit copy = new Unit(name, size, DEFENSE, ATTACK, cost, type, ability);
+        copy.ability1 = ability1;
+        return copy;
+    }
+
+    public void SetTerrainStatModifiers(int attackModifier, int defenseModifier)
+    {
+        ATTACK += attackModifier - terrainAttackModifier;
+        DEFENSE += defenseModifier - terrainDefenseModifier;
+        terrainAttackModifier = attackModifier;
+        terrainDefenseModifier = defenseModifier;
+    }
+
+    public void AddTemporaryStatModifiers(int attackModifier, int defenseModifier)
+    {
+        ATTACK += attackModifier;
+        DEFENSE += defenseModifier;
+        temporaryAttackModifier += attackModifier;
+        temporaryDefenseModifier += defenseModifier;
+    }
+
+    public void ClearTemporaryStatModifiers()
+    {
+        ATTACK -= temporaryAttackModifier;
+        DEFENSE -= temporaryDefenseModifier;
+        temporaryAttackModifier = 0;
+        temporaryDefenseModifier = 0;
     }
 }
 

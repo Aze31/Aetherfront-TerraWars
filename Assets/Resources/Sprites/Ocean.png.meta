@@ -3,8 +3,8 @@ guid: a9995db3bbaf36549baada7554d024f3
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -2923631271834578888
-    second: Copilot_20260617_170749-removebg-preview_0
+      213: -8210071984612457726
+    second: Ocean_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -96,17 +96,30 @@ TextureImporter:
     ignorePlatformSupport: 0
     androidETC2FallbackOverride: 0
     forceMaximumCompressionQuality_BC6H_BC7: 0
+  - serializedVersion: 4
+    buildTarget: WebGL
+    maxTextureSize: 2048
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 1
+    compressionQuality: 50
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+    ignorePlatformSupport: 0
+    androidETC2FallbackOverride: 0
+    forceMaximumCompressionQuality_BC6H_BC7: 0
   spriteSheet:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Copilot_20260617_170749-removebg-preview_0
+      name: Ocean_0
       rect:
         serializedVersion: 2
-        x: 101
-        y: 103
-        width: 298
-        height: 300
+        x: 0
+        y: 0
+        width: 1225
+        height: 1232
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -115,8 +128,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 830931c29dc2d67d0800000000000000
-      internalID: -2923631271834578888
+      spriteID: 203c9c06707ff0e80800000000000000
+      internalID: -8210071984612457726
       vertices: []
       indices: 
       edges: []
@@ -135,7 +148,7 @@ TextureImporter:
     spriteCustomMetadata:
       entries: []
     nameFileIdTable:
-      Copilot_20260617_170749-removebg-preview_0: -2923631271834578888
+      Ocean_0: -8210071984612457726
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

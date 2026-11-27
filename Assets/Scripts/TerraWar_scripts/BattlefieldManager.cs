@@ -1,5 +1,6 @@
 using UnityEngine;
 using System;
+using System.Collections.Generic;
 using static CardLibrary;
 using UnityEngine.UI;
 using TMPro;
@@ -55,13 +56,40 @@ public class BattlefieldManager : MonoBehaviour
                 currentPhase = gamePhase.YOUR_ATTACKS;
                 break;
             case gamePhase.YOUR_ATTACKS:
+                ClearTemporaryTacticEffects();
                 currentPhase = gamePhase.ENEMY_TURN;
 
                 break;
         }
     }
+
+    public void AddTemporaryStatModifiers(Unit unit, int attackModifier, int defenseModifier)
+    {
+        if (unit == null)
+        {
+            Debug.LogError("Cannot apply a temporary tactic effect to a null Unit.", this);
+            return;
+        }
+
+        unit.AddTemporaryStatModifiers(attackModifier, defenseModifier);
+        unitsWithTemporaryTacticEffects.Add(unit);
+    }
+
+    private void ClearTemporaryTacticEffects()
+    {
+        foreach (Unit unit in unitsWithTemporaryTacticEffects)
+        {
+            if (unit != null)
+            {
+                unit.ClearTemporaryStatModifiers();
+            }
+        }
+
+        unitsWithTemporaryTacticEffects.Clear();
+    }
     private void passTurnPressed()
     {
+        ClearTemporaryTacticEffects();
         currentPhase = gamePhase.ENEMY_TURN;
     }
     
@@ -78,7 +106,11 @@ public class BattlefieldManager : MonoBehaviour
         }
         else
         {
-            HandleSelectionClick();
+            if (!IsTacticTargetSelectionPending)
+            {
+                HandleSelectionClick();
+            }
+
             if (selectedUnit != null && arrowPressed)
             {
                 if (currentPhase == gamePhase.YOUR_TURN)
@@ -117,6 +149,13 @@ public class BattlefieldManager : MonoBehaviour
     private Tile selectedUnitTile;
     private Unit selectedUnit;
     private TilePrefab selectedUnitView;
+    private Action<Tile, Unit> pendingUnitSelection;
+    private Func<Tile, Unit, bool> pendingUnitFilter;
+    private Action<Tile> pendingTileSelection;
+    private Func<Tile, bool> pendingTileFilter;
+    private string pendingSelectionPrompt;
+    private readonly HashSet<Unit> unitsWithTemporaryTacticEffects = new HashSet<Unit>();
+    private int lastTileClickFrame = -1;
     private bool upArrowHeld;
     private bool downArrowHeld;
     private bool leftArrowHeld;
@@ -168,6 +207,7 @@ public class BattlefieldManager : MonoBehaviour
     }
     public void startPlayerTurn()
     {
+        ClearTemporaryTacticEffects();
         if (player == null)
         {
             player = Player.GetInstance();
@@ -259,6 +299,11 @@ public class BattlefieldManager : MonoBehaviour
             camera);
     }
 
+    public bool IsTacticTargetSelectionPending
+    {
+        get { return pendingUnitSelection != null || pendingTileSelection != null; }
+    }
+
     //checks if two tiles are adjacent to each other
     public Boolean checkifAdjacent(Tile t1, Tile t2)
     {
@@ -296,8 +341,9 @@ public class BattlefieldManager : MonoBehaviour
             return;
         }
 
-        tile.putUnitHere(unit);
-        if (unit.ability == Ability.FLYING)
+        Unit battlefieldUnit = unit.CreateBattlefieldCopy();
+        tile.putUnitHere(battlefieldUnit);
+        if (battlefieldUnit.ability == Ability.FLYING)
         {
             tile.skyOccupied = true;
             tile.playerControlsFlyingUnit = playerControlsUnit;
@@ -311,6 +357,8 @@ public class BattlefieldManager : MonoBehaviour
             tile.groundUnitMovedThisTurn = false;
             tile.groundUnitAttackedThisTurn = false;
         }
+
+        ResolveTerrainEffectsOnBattlefield();
     }
     public void removeUnitsAt(int x, int y)
     {
@@ -346,19 +394,99 @@ public class BattlefieldManager : MonoBehaviour
     }
     public void damageUnitsAt(int x, int y, int ATTACK)
     {
+        if (x < 1 || x > BoardSize || y < 1 || y > BoardSize)
+        {
+            return;
+        }
+
         Tile tile = battleField[x, y];
         if (tile == null)
         {
             return;
         }
 
-        if (tile.unitHere != null && tile.unitHere.DEFENSE <= ATTACK)
+        if (tile.unitHere != null)
         {
-            RemoveUnitFromTile(tile, tile.unitHere);
+            damageUnitAt(tile, tile.unitHere, ATTACK);
         }
-        if (tile.unitFlyingHere != null && tile.unitFlyingHere.DEFENSE <= ATTACK)
+        if (tile.unitFlyingHere != null)
         {
-            RemoveUnitFromTile(tile, tile.unitFlyingHere);
+            damageUnitAt(tile, tile.unitFlyingHere, ATTACK);
+        }
+    }
+
+    public bool damageUnitAt(Tile tile, Unit unit, int damage)
+    {
+        if (tile == null || unit == null || damage <= 0 ||
+            (tile.unitHere != unit && tile.unitFlyingHere != unit) ||
+            unit.DEFENSE > damage)
+        {
+            return false;
+        }
+
+        RemoveUnitFromTile(tile, unit);
+        return true;
+    }
+
+    public void damageUnit(Unit unit, int damage)
+    {
+        if (unit == null)
+        {
+            return;
+        }
+
+        foreach (Tile tile in battleField)
+        {
+            if (tile != null && (tile.unitHere == unit || tile.unitFlyingHere == unit))
+            {
+                damageUnitAt(tile, unit, damage);
+                return;
+            }
+        }
+    }
+
+    public void damageAllUnits(int damage, Unit excludedUnit = null)
+    {
+        foreach (Tile tile in battleField)
+        {
+            if (tile == null)
+            {
+                continue;
+            }
+
+            Unit groundUnit = tile.unitHere;
+            Unit flyingUnit = tile.unitFlyingHere;
+            if (groundUnit != excludedUnit)
+            {
+                damageUnitAt(tile, groundUnit, damage);
+            }
+
+            if (flyingUnit != excludedUnit)
+            {
+                damageUnitAt(tile, flyingUnit, damage);
+            }
+        }
+    }
+
+    public void damageUnitsAdjacentTo(Tile tile, int damage)
+    {
+        if (tile == null)
+        {
+            return;
+        }
+
+        damageUnitsAt(tile.x - 1, tile.y, damage);
+        damageUnitsAt(tile.x + 1, tile.y, damage);
+        damageUnitsAt(tile.x, tile.y - 1, damage);
+        damageUnitsAt(tile.x, tile.y + 1, damage);
+    }
+
+    public void damageOpponent(int damage)
+    {
+        Opponent target = GetOpponent();
+        if (target != null)
+        {
+            target.loseHealth(damage);
         }
     }
 
@@ -502,6 +630,24 @@ public class BattlefieldManager : MonoBehaviour
 
     public void HandleTileClicked(TilePrefab clickedTileView)
     {
+        if (lastTileClickFrame == Time.frameCount)
+        {
+            return;
+        }
+
+        lastTileClickFrame = Time.frameCount;
+        if (pendingUnitSelection != null)
+        {
+            HandlePendingUnitSelection(clickedTileView);
+            return;
+        }
+
+        if (pendingTileSelection != null)
+        {
+            HandlePendingTileSelection(clickedTileView);
+            return;
+        }
+
         if ((currentPhase != gamePhase.YOUR_TURN &&
              currentPhase != gamePhase.YOUR_ATTACKS) ||
             clickedTileView == null ||
@@ -537,6 +683,208 @@ public class BattlefieldManager : MonoBehaviour
         }
 
         SelectUnit(clickedTileView, clickedUnit);
+    }
+
+    public void selectAnyUnit(string tacticName, Action<Tile, Unit> onSelected)
+    {
+        selectAnyUnit(tacticName, null, onSelected);
+    }
+
+    public void selectAnyUnit(
+        string tacticName,
+        Func<Tile, Unit, bool> isValidTarget,
+        Action<Tile, Unit> onSelected)
+    {
+        if (onSelected == null)
+        {
+            Debug.LogError("Cannot select a tactic target without a callback.", this);
+            return;
+        }
+
+        if (narrativeText == null)
+        {
+            Debug.LogError("BattlefieldManager requires NarrativeText to prompt for a tactic target.", this);
+            return;
+        }
+
+        if (pendingUnitSelection != null || pendingTileSelection != null)
+        {
+            Debug.LogError("Cannot start a tactic target selection while another selection is active.", this);
+            return;
+        }
+
+        pendingSelectionPrompt = "Select any unit as a target for " + tacticName + ".";
+        pendingUnitFilter = isValidTarget;
+        pendingUnitSelection = onSelected;
+        DeselectSelectedUnit();
+        ShowSelectionPrompt(pendingSelectionPrompt);
+    }
+
+    public void selectAnyUnitTile(string tacticName, Action<Tile, Unit> onSelected)
+    {
+        selectAnyUnit(tacticName, onSelected);
+    }
+
+    private void HandlePendingUnitSelection(TilePrefab tileView)
+    {
+        Tile tile = GetTileFromView(tileView);
+        Unit target = tile != null
+            ? tile.unitHere != null ? tile.unitHere : tile.unitFlyingHere
+            : null;
+        if (target == null ||
+            (pendingUnitFilter != null && !pendingUnitFilter(tile, target)))
+        {
+            ShowSelectionPrompt(pendingSelectionPrompt);
+            return;
+        }
+
+        Action<Tile, Unit> onSelected = pendingUnitSelection;
+        string selectionPrompt = pendingSelectionPrompt;
+        ClearPendingSelection();
+        onSelected(tile, target);
+        HideSelectionPromptIfComplete(selectionPrompt);
+    }
+
+    private void HandlePendingTileSelection(TilePrefab tileView)
+    {
+        Tile tile = GetTileFromView(tileView);
+        if (tile == null || (pendingTileFilter != null && !pendingTileFilter(tile)))
+        {
+            ShowSelectionPrompt(pendingSelectionPrompt);
+            return;
+        }
+
+        Action<Tile> onSelected = pendingTileSelection;
+        string selectionPrompt = pendingSelectionPrompt;
+        ClearPendingSelection();
+        onSelected(tile);
+        HideSelectionPromptIfComplete(selectionPrompt);
+    }
+
+    private Tile GetTileFromView(TilePrefab tileView)
+    {
+        if (tileView == null ||
+            tileView.x < 1 || tileView.x > BoardSize ||
+            tileView.y < 1 || tileView.y > BoardSize)
+        {
+            return null;
+        }
+
+        return battleField[tileView.x, tileView.y];
+    }
+
+    private void ClearPendingSelection()
+    {
+        pendingUnitSelection = null;
+        pendingUnitFilter = null;
+        pendingTileSelection = null;
+        pendingTileFilter = null;
+        pendingSelectionPrompt = null;
+    }
+
+    private void ShowSelectionPrompt(string prompt)
+    {
+        if (narrativeText == null)
+        {
+            Debug.LogError("BattlefieldManager requires NarrativeText to prompt for a tactic target.", this);
+            return;
+        }
+
+        narrativeText.startTypingText(prompt);
+    }
+
+    private void HideSelectionPromptIfComplete(string selectionPrompt)
+    {
+        if (!IsTacticTargetSelectionPending &&
+            narrativeText != null &&
+            narrativeText.canvasObject != null &&
+            narrativeText.textObject != null &&
+            narrativeText.textObject.text == selectionPrompt)
+        {
+            narrativeText.canvasObject.SetActive(false);
+        }
+    }
+
+    public void selectAdjacentDestination(
+        Tile source,
+        Unit unit,
+        string tacticName,
+        Action<Tile> onMoved)
+    {
+        if (narrativeText == null)
+        {
+            Debug.LogError("BattlefieldManager requires NarrativeText to prompt for a move destination.", this);
+            return;
+        }
+
+        if (source == null || unit == null ||
+            !HasAdjacentTacticMoveDestination(source, unit))
+        {
+            ShowSelectionPrompt("No adjacent tile is available for " + tacticName + ".");
+            return;
+        }
+
+        pendingSelectionPrompt =
+            "Select an adjacent tile for " + unit.name + " to move to (" + tacticName + ").";
+        pendingTileFilter = destination => CanMoveUnitForTactic(source, unit, destination);
+        pendingTileSelection = destination =>
+        {
+            if (TryMoveUnitForTactic(source, unit, destination))
+            {
+                onMoved?.Invoke(destination);
+            }
+        };
+        ShowSelectionPrompt(pendingSelectionPrompt);
+    }
+
+    private bool HasAdjacentTacticMoveDestination(Tile source, Unit unit)
+    {
+        for (int x = source.x - 1; x <= source.x + 1; x++)
+        {
+            for (int y = source.y - 1; y <= source.y + 1; y++)
+            {
+                Tile destination = x >= 1 && x <= BoardSize && y >= 1 && y <= BoardSize
+                    ? battleField[x, y]
+                    : null;
+                if (CanMoveUnitForTactic(source, unit, destination))
+                {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private bool CanMoveUnitForTactic(Tile source, Unit unit, Tile destination)
+    {
+        if (source == null || unit == null || destination == null ||
+            Math.Abs(source.x - destination.x) + Math.Abs(source.y - destination.y) != 1)
+        {
+            return false;
+        }
+
+        bool isFlying = unit.ability == Ability.FLYING;
+        bool isOnSource = isFlying
+            ? source.unitFlyingHere == unit
+            : source.unitHere == unit;
+        return isOnSource &&
+            destination.curTerrain != null &&
+            destination.canPassTerrain(unit.ability, destination.curTerrain) &&
+            destination.canHoldUnit(unit);
+    }
+
+    private bool TryMoveUnitForTactic(Tile source, Unit unit, Tile destination)
+    {
+        if (!CanMoveUnitForTactic(source, unit, destination))
+        {
+            return false;
+        }
+
+        bool playerControlsUnit = unit.ability == Ability.FLYING
+            ? source.playerControlsFlyingUnit
+            : source.playerControlsGroundUnit;
+        return MoveUnitBetweenTiles(source, destination, unit, playerControlsUnit);
     }
 
     private void ShowOpponentUnitInfo(Unit unit)
@@ -811,8 +1159,22 @@ public class BattlefieldManager : MonoBehaviour
 
         Tile source = battleField[sourceX, sourceY];
         Tile destination = battleField[destinationX, destinationY];
-        TilePrefab sourceView = tileViews[sourceX, sourceY];
-        TilePrefab destinationView = tileViews[destinationX, destinationY];
+        return MoveUnitBetweenTiles(source, destination, unit, playerControlsUnit);
+    }
+
+    private bool MoveUnitBetweenTiles(
+        Tile source,
+        Tile destination,
+        Unit unit,
+        bool playerControlsUnit)
+    {
+        if (source == null || destination == null || unit == null)
+        {
+            return false;
+        }
+
+        TilePrefab sourceView = tileViews[source.x, source.y];
+        TilePrefab destinationView = tileViews[destination.x, destination.y];
         if (sourceView == null || destinationView == null)
         {
             Debug.LogError("Cannot move a unit because a source or destination tile view is missing.", this);
@@ -864,6 +1226,17 @@ public class BattlefieldManager : MonoBehaviour
             destination.groundUnitAttackedThisTurn = hasAttacked;
         }
 
+        if (isSelectedUnit)
+        {
+            selectedUnitTile = destination;
+            selectedUnitView = destinationView;
+            if (!destinationView.SetUnitSelected(unit, true))
+            {
+                DeselectSelectedUnit();
+            }
+        }
+
+        ResolveTerrainEffectsOnBattlefield();
         return true;
     }
 
@@ -897,11 +1270,33 @@ public class BattlefieldManager : MonoBehaviour
         }
     }
 
-    private static bool IsPlayerUnitOnTile(Tile tile, Unit unit)
+    public static bool IsPlayerUnitOnTile(Tile tile, Unit unit)
     {
         return tile != null &&
             ((tile.unitHere == unit && tile.playerControlsGroundUnit) ||
              (tile.unitFlyingHere == unit && tile.playerControlsFlyingUnit));
+    }
+
+    private void ResolveTerrainEffectsOnBattlefield()
+    {
+        CardLibrary library = CardLibrary.getInstance();
+        foreach (Tile tile in battleField)
+        {
+            if (tile == null)
+            {
+                continue;
+            }
+
+            if (tile.unitHere != null)
+            {
+                library.resolveTerrainOnUnit(tile, tile.unitHere);
+            }
+
+            if (tile.unitFlyingHere != null)
+            {
+                library.resolveTerrainOnUnit(tile, tile.unitFlyingHere);
+            }
+        }
     }
 
     private static bool HasUnitMovedThisTurn(Tile tile, Unit unit)
@@ -1082,6 +1477,13 @@ public class BattlefieldManager : MonoBehaviour
     }
     public void placeTerrainAt(int x, int y, Terrain terrain, bool playerControlsTerrain = true)
     {
+        if (x < 1 || x > BoardSize || y < 1 || y > BoardSize ||
+            terrain == null || battleField[x, y] == null)
+        {
+            Debug.LogError("Cannot place a null terrain or place it at invalid coordinates.", this);
+            return;
+        }
+
         Tile tile = battleField[x, y];
         bool passConditionChanged = tile.curTerrain != null &&
             tile.curTerrain.condition != terrain.condition;
@@ -1089,32 +1491,21 @@ public class BattlefieldManager : MonoBehaviour
         tile.curTerrain = terrain;
         tile.playerControlsTerrain = playerControlsTerrain;
 
-        if (!passConditionChanged)
-        {
-            return;
-        }
-
-        if (tile.unitHere != null &&
+        if (passConditionChanged &&
+            tile.unitHere != null &&
             !tile.canPassTerrain(tile.unitHere.ability, terrain))
         {
             RemoveUnitFromTile(tile, tile.unitHere);
         }
 
-        if (tile.unitFlyingHere != null &&
+        if (passConditionChanged &&
+            tile.unitFlyingHere != null &&
             !tile.canPassTerrain(tile.unitFlyingHere.ability, terrain))
         {
             RemoveUnitFromTile(tile, tile.unitFlyingHere);
         }
-    }
-    public Unit selectAnyUnit()
-    {
-        //TODO: fill this in later with a visual where the player gets to click a Unit (or more technically a tile with unit on it) and it returns that unit
-        return new Unit("0",0,0,0,Element.COSMIC);
-    }
-    public Tile selectAnyUnitTile()
-    {
-        //TODO: fill this in later with a visual where the player can select any tile with a unit on it
-        return new Tile(0,0);
+
+        ResolveTerrainEffectsOnBattlefield();
     }
 }
 

@@ -146,49 +146,274 @@ public class CardLibrary
 //for the player to resolve tactics. Opponent's tactics are resolved in Opponent.cs
     public void resolveTacticByName(string name)
     {
+        BattlefieldManager manager = BattlefieldManager.getInstance();
+        if (manager == null)
+        {
+            Debug.LogError("Cannot resolve tactic '" + name + "' without a BattlefieldManager.");
+            return;
+        }
+
         switch (name)
         {
-            case "High Tide": //ramp 2 aether
-                Player.GetInstance().Aether += 4;
+            case "The Forked Advance":
+                manager.selectAnyUnit(name, (tile, unit) =>
+                    manager.selectAdjacentDestination(
+                        tile,
+                        unit,
+                        name,
+                        destination => manager.damageUnitsAdjacentTo(destination, 1)));
+                break;
+            case "The Blazing Gambit":
+                ResolveBlazingGambit(manager);
                 break;
             case "Sudden Shield":
-                BattlefieldManager.getInstance().selectAnyUnit().DEFENSE += 2;
+                manager.selectAnyUnit(
+                    name,
+                    (tile, unit) => BattlefieldManager.IsPlayerUnitOnTile(tile, unit),
+                    (tile, unit) => manager.AddTemporaryStatModifiers(unit, 0, 2));
+                break;
+            case "Draconic Flare":
+                manager.selectAnyUnit(
+                    name,
+                    (tile, unit) =>
+                        unit.type == Element.FIRE &&
+                        BattlefieldManager.IsPlayerUnitOnTile(tile, unit),
+                    (tile, unit) =>
+                    {
+                        unit.ATTACK += 1;
+                        manager.damageAllUnits(unit.ATTACK, unit);
+                    });
+                break;
+            case "Ruinous Rampage":
+                manager.selectAnyUnit(
+                    name,
+                    (tile, unit) =>
+                        unit.type == Element.RUIN &&
+                        BattlefieldManager.IsPlayerUnitOnTile(tile, unit),
+                    (tile, unit) =>
+                    {
+                        manager.AddTemporaryStatModifiers(unit, 3, 0);
+                        manager.damageUnitsAdjacentTo(tile, unit.ATTACK);
+                    });
+                break;
+            case "High Tide":
+                Player player = Player.GetInstance();
+                if (player == null)
+                {
+                    Debug.LogError("Cannot resolve High Tide because no Player instance exists.");
+                    return;
+                }
+
+                player.Aether += 4;
                 break;
             case "Water Blast":
-                Tile chosen = BattlefieldManager.getInstance().selectAnyUnitTile();
-                BattlefieldManager.getInstance().damageUnitsAt(chosen.x,chosen.y,3);
+                manager.selectAnyUnitTile(name, (tile, unit) =>
+                    manager.damageUnitAt(tile, unit, 3));
                 break;
-            case "Knowledge Vial": //draw 3
-                Player.GetInstance().curhand.Add(Player.GetInstance().drawCard());
-                Player.GetInstance().curhand.Add(Player.GetInstance().drawCard());
-                Player.GetInstance().curhand.Add(Player.GetInstance().drawCard());
-                BattlefieldManager.getInstance().updateHand();
-            break;
-
+            case "Knowledge Vial":
+                ResolveKnowledgeVial(manager);
+                break;
+            case "Burning Flare":
+                manager.damageOpponent(4);
+                break;
             default:
-                break;             
+                Debug.LogWarning("No tactic effect is defined for '" + name + "'.");
+                break;
         }
-        
     }
+
+    private static void ResolveBlazingGambit(BattlefieldManager manager)
+    {
+        Tile[,] battlefield = BattlefieldManager.battleField;
+        HashSet<Unit> unitsToDamage = new HashSet<Unit>();
+
+        for (int x = 1; x < battlefield.GetLength(0); x++)
+        {
+            for (int y = 1; y < battlefield.GetLength(1); y++)
+            {
+                Tile terrainTile = battlefield[x, y];
+                if (terrainTile == null ||
+                    terrainTile.curTerrain == null ||
+                    terrainTile.curTerrain.type != Element.FIRE)
+                {
+                    continue;
+                }
+
+                AddNonFireUnitsAt(battlefield, x - 1, y, unitsToDamage);
+                AddNonFireUnitsAt(battlefield, x + 1, y, unitsToDamage);
+                AddNonFireUnitsAt(battlefield, x, y - 1, unitsToDamage);
+                AddNonFireUnitsAt(battlefield, x, y + 1, unitsToDamage);
+            }
+        }
+
+        foreach (Unit unit in unitsToDamage)
+        {
+            manager.damageUnit(unit, 1);
+        }
+
+        for (int x = 1; x < battlefield.GetLength(0); x++)
+        {
+            for (int y = 1; y < battlefield.GetLength(1); y++)
+            {
+                Tile tile = battlefield[x, y];
+                if (tile == null)
+                {
+                    continue;
+                }
+
+                if (tile.unitHere != null &&
+                    tile.playerControlsGroundUnit &&
+                    tile.unitHere.type == Element.FIRE)
+                {
+                    tile.unitHere.ATTACK += 1;
+                }
+
+                if (tile.unitFlyingHere != null &&
+                    tile.playerControlsFlyingUnit &&
+                    tile.unitFlyingHere.type == Element.FIRE)
+                {
+                    tile.unitFlyingHere.ATTACK += 1;
+                }
+            }
+        }
+    }
+
+    private static void AddNonFireUnitsAt(
+        Tile[,] battlefield,
+        int x,
+        int y,
+        HashSet<Unit> unitsToDamage)
+    {
+        if (x < 1 || x >= battlefield.GetLength(0) ||
+            y < 1 || y >= battlefield.GetLength(1))
+        {
+            return;
+        }
+
+        Tile tile = battlefield[x, y];
+        if (tile == null)
+        {
+            return;
+        }
+
+        if (tile.unitHere != null && tile.unitHere.type != Element.FIRE)
+        {
+            unitsToDamage.Add(tile.unitHere);
+        }
+
+        if (tile.unitFlyingHere != null && tile.unitFlyingHere.type != Element.FIRE)
+        {
+            unitsToDamage.Add(tile.unitFlyingHere);
+        }
+    }
+
+    private static void ResolveKnowledgeVial(BattlefieldManager manager)
+    {
+        Player player = Player.GetInstance();
+        if (player == null)
+        {
+            Debug.LogError("Cannot resolve Knowledge Vial because no Player instance exists.");
+            return;
+        }
+
+        for (int i = 0; i < 3; i++)
+        {
+            Card drawnCard = player.drawCard();
+            if (drawnCard != null)
+            {
+                player.curhand.Add(drawnCard);
+            }
+        }
+
+        manager.updateHand();
+    }
+
     public Unit resolveTerrainOnUnit(string terrainName, Unit unit)
     {
+        return resolveTerrainOnUnit(null, terrainName, unit);
+    }
+
+    public Unit resolveTerrainOnUnit(Tile tile, Unit unit)
+    {
+        return resolveTerrainOnUnit(tile, tile != null && tile.curTerrain != null
+            ? tile.curTerrain.name
+            : null, unit);
+    }
+
+    private Unit resolveTerrainOnUnit(Tile tile, string terrainName, Unit unit)
+    {
+        if (unit == null)
+        {
+            Debug.LogError("Cannot resolve terrain effects for a null Unit.");
+            return null;
+        }
+
+        int attackModifier = 0;
+        int defenseModifier = 0;
         switch (terrainName)
         {
-            case "Frozen Lake":
-                if(unit.type != Element.WATER){
-                unit.DEFENSE -= 1;
+            case "Mountains":
+                if (unit.type == Element.EARTH || unit.type == Element.WIND)
+                {
+                    defenseModifier++;
                 }
-                return unit;
-            case "Desert" : 
-                if(unit.type == Element.FIRE)
-                    {
-                        unit.ATTACK +=1;
-                    }
-                return unit;
+                break;
+            case "Ocean":
+                if (unit.type == Element.WATER)
+                {
+                    defenseModifier++;
+                }
+                break;
+            case "Frozen Lake":
+                if (unit.type != Element.WATER)
+                {
+                    defenseModifier--;
+                }
+                break;
+            case "Desert":
+                if (unit.type == Element.FIRE)
+                {
+                    attackModifier++;
+                }
+                break;
+            case "Thunderfalls":
+                if (unit.type == Element.LIGHTNING &&
+                    unit.ability != Ability.RANGE1 &&
+                    unit.ability != Ability.RANGE2 &&
+                    unit.ability1 != Ability.RANGE1 &&
+                    unit.ability1 != Ability.RANGE2)
+                {
+                    attackModifier++;
+                }
+                break;
+        }
 
-            default: //reset to og unit stats whenever it moves
-            //this means that terrain and tactic buffs are local to a terrain it is what it is
-            return getUnitByName(unit.name);
+        if (tile != null && (unit.type == Element.RUIN || unit.type == Element.NATURE))
+        {
+            Tile[,] battlefield = BattlefieldManager.battleField;
+            AddTempleDefenseModifier(battlefield, tile.x - 1, tile.y, ref defenseModifier);
+            AddTempleDefenseModifier(battlefield, tile.x + 1, tile.y, ref defenseModifier);
+            AddTempleDefenseModifier(battlefield, tile.x, tile.y - 1, ref defenseModifier);
+            AddTempleDefenseModifier(battlefield, tile.x, tile.y + 1, ref defenseModifier);
+        }
+
+        unit.SetTerrainStatModifiers(attackModifier, defenseModifier);
+        return unit;
+    }
+
+    private static void AddTempleDefenseModifier(
+        Tile[,] battlefield,
+        int x,
+        int y,
+        ref int defenseModifier)
+    {
+        if (x >= 1 && x < battlefield.GetLength(0) &&
+            y >= 1 && y < battlefield.GetLength(1) &&
+            battlefield[x, y] != null &&
+            battlefield[x, y].curTerrain != null &&
+            battlefield[x, y].curTerrain.name == "Ancient Temple")
+        {
+            defenseModifier++;
         }
     }
 

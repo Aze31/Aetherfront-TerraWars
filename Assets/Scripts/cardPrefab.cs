@@ -369,6 +369,7 @@ public class cardPrefab : MonoBehaviour, IPointerEnterHandler, IPointerExitHandl
         Player player = Player.GetInstance();
         if (manager == null ||
             player == null ||
+            manager.IsTacticTargetSelectionPending ||
             !manager.IsPointerOverTacticZone(screenPosition) ||
             !player.payAether(tactic.cost))
         {
