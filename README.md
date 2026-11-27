@@ -7,7 +7,7 @@ C opens up your collection panel, where you can drag cards around to change out 
 B opens up your deck and stats panel, so you can check card formatting and your own stats
 the Info button reminds you of some of this
 press Space to close all active panels
-press X to close a dialogue (narrative) box
+press X to close a dialogue (narrative) box which also pops up for information during battles
 
 
 ## GAMEPLAY:
